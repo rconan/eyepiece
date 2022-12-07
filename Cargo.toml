@@ -1,0 +1,14 @@
+[package]
+name = "eyepiece"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+colorous = "1.0.8"
+image = "0.24.5"
+log = "0.4.17"
+num-complex = "0.4.2"
+rustfft = "6.1.0"
+skyangle = { version = "0.2.0", path = "../skyangle" }
