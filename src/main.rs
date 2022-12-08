@@ -20,10 +20,16 @@ fn main() -> anyhow::Result<()> {
     let alpha = SkyAngle::MilliArcsec(10f64);
     println!("Resolution: {:.3}mas", alpha);
     let fov = SkyAngle::Arcsecond(1f64);
-    let scale = SkyAngle::Radian(fov / 2.);
-    let stars = StarDistribution::Globular {
+    // let scale = SkyAngle::Radian(fov / 2.);
+    // let stars = StarDistribution::Globular {
+    //     center: None,
+    //     scale,
+    //     n_sample: 150,
+    // };
+    let scale = SkyAngle::Radian(fov / 10.);
+    let stars = StarDistribution::Lorentz {
         center: None,
-        scale,
+        scale: (scale, scale),
         n_sample: 150,
     };
 
