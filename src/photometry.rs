@@ -1,6 +1,6 @@
 #[derive(Debug)]
 pub struct Photometry {
-    pub(crate) wavelength: f64,
+    pub wavelength: f64,
     zeropoint: f64,
     spectral_bandwidth: f64,
 }

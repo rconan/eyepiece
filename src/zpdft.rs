@@ -66,7 +66,7 @@ impl ZpDft {
         self.zero_padded_buffer.copy_from_slice(buffer.as_slice());
     }
     /// Compute the 2D Fourier transfrom
-    pub fn process(&mut self, buffer: &[Cpx]) {
+    pub fn process(&mut self, buffer: &[Cpx]) -> &mut Self {
         self.zero_padding(buffer);
         self.fft.process_with_scratch(
             self.zero_padded_buffer.as_mut_slice(),
@@ -87,6 +87,7 @@ impl ZpDft {
             self.scratch.as_mut_slice(),
         );
         self.shift();
+        self
     }
     /// FFT buffer real part
     pub fn real(&self) -> Vec<f64> {
@@ -107,6 +108,37 @@ impl ZpDft {
             .map(|b| b.norm_sqr())
             .collect()
     }
+    pub fn crop(&mut self, new_len: usize) -> &mut Self {
+        let ij0 = self.len as usize / 2 - new_len / 2;
+        let buffer = self.zero_padded_buffer.clone();
+        self.zero_padded_buffer = vec![Complex::zero(); new_len * new_len];
+        for i in 0..new_len {
+            for j in 0..new_len {
+                let k = i * new_len + j;
+                let kk = (i + ij0) * self.len as usize + j + ij0;
+                self.zero_padded_buffer[k] = buffer[kk];
+            }
+        }
+        self
+    }
+    pub fn resize(&mut self, new_len: usize) -> &mut Self {
+        let old_len = self.len as usize;
+        if old_len > new_len {
+            self.crop(new_len);
+        } else {
+            let ij0 = (new_len - old_len) / 2;
+            let buffer = self.zero_padded_buffer.clone();
+            self.zero_padded_buffer = vec![Complex::zero(); new_len * new_len];
+            for i in 0..old_len {
+                for j in 0..old_len {
+                    let k = i * old_len + j;
+                    let kk = (i + ij0) * new_len + j + ij0;
+                    self.zero_padded_buffer[kk] = buffer[k];
+                }
+            }
+        }
+        self
+    }
 }
 
 #[cfg(test)]
@@ -115,7 +147,68 @@ mod tests {
 
     #[test]
     fn zero_padding() {
-        let n = 9;
+        let n = 8;
+        let n_fft = 16;
+        let mut zp_dft = ZpDft::forward(n_fft);
+        let buffer: Vec<Cpx> = vec![Complex::new(1f64, 0f64); n * n];
+        zp_dft.zero_padding(buffer.as_slice());
+        println!("REAL");
+        zp_dft.real().chunks(n_fft).for_each(|c| println!("{c:?}"));
+        println!("IMAG");
+        zp_dft.imag().chunks(n_fft).for_each(|c| println!("{c:?}"));
+        zp_dft.process(buffer.as_slice());
+        println!("REAL");
+        zp_dft
+            .real()
+            .chunks(n_fft)
+            .for_each(|c| println!("{c:+7.2?}"));
+        println!("IMAG");
+        zp_dft
+            .imag()
+            .chunks(n_fft)
+            .for_each(|c| println!("{c:+7.2?}"));
+        println!("NORM");
+        zp_dft
+            .norm()
+            .chunks(n_fft)
+            .for_each(|c| println!("{c:+7.2?}"));
+    }
+
+    #[test]
+    fn cropping() {
+        let n = 8;
+        let n_fft = 16;
+        let mut zp_dft = ZpDft::forward(n_fft);
+        let buffer: Vec<Cpx> = vec![Complex::new(1f64, 0f64); n * n];
+        zp_dft.zero_padding(buffer.as_slice());
+        println!("REAL");
+        zp_dft.real().chunks(n_fft).for_each(|c| println!("{c:?}"));
+        println!("IMAG");
+        zp_dft.imag().chunks(n_fft).for_each(|c| println!("{c:?}"));
+        zp_dft.process(buffer.as_slice());
+        println!("REAL");
+        zp_dft
+            .real()
+            .chunks(n_fft)
+            .for_each(|c| println!("{c:+7.2?}"));
+        println!("IMAG");
+        zp_dft
+            .imag()
+            .chunks(n_fft)
+            .for_each(|c| println!("{c:+7.2?}"));
+        println!("NORM");
+        zp_dft
+            .norm()
+            .chunks(n_fft)
+            .for_each(|c| println!("{c:+7.2?}"));
+        zp_dft.crop(7);
+        println!("NORM");
+        zp_dft.norm().chunks(7).for_each(|c| println!("{c:+7.2?}"));
+    }
+
+    #[test]
+    fn resizing() {
+        let n = 7;
         let n_fft = 12;
         let mut zp_dft = ZpDft::forward(n_fft);
         let buffer: Vec<Cpx> = vec![Complex::new(1f64, 0f64); n * n];
@@ -134,6 +227,15 @@ mod tests {
         zp_dft
             .imag()
             .chunks(n_fft)
-            .for_each(|c| println!("{c:.2?}"));
+            .for_each(|c| println!("{c:+7.2?}"));
+        println!("NORM");
+        zp_dft
+            .norm()
+            .chunks(n_fft)
+            .for_each(|c| println!("{c:+7.2?}"));
+            let new_len =18;
+        zp_dft.resize(new_len);
+        println!("NORM");
+        zp_dft.norm().chunks(new_len).for_each(|c| println!("{c:+7.2?}"));
     }
 }
