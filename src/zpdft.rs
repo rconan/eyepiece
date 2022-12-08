@@ -24,6 +24,10 @@ impl ZpDft {
             len: len as i64,
         }
     }
+    pub fn reset(&mut self) -> &mut Self {
+        self.zero_padded_buffer = vec![Complex::zero(); (self.len * self.len) as usize];
+        self
+    }
     /// Inverse Fourier transfrom
     pub fn inverse(len: usize) -> Self {
         let mut planner = FftPlanner::new();
@@ -233,9 +237,12 @@ mod tests {
             .norm()
             .chunks(n_fft)
             .for_each(|c| println!("{c:+7.2?}"));
-            let new_len =18;
+        let new_len = 18;
         zp_dft.resize(new_len);
         println!("NORM");
-        zp_dft.norm().chunks(new_len).for_each(|c| println!("{c:+7.2?}"));
+        zp_dft
+            .norm()
+            .chunks(new_len)
+            .for_each(|c| println!("{c:+7.2?}"));
     }
 }
