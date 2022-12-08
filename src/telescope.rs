@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use crate::Observer;
 use image::{ImageResult, Rgb, RgbImage};
 use num_complex::Complex;
@@ -6,7 +8,6 @@ use rustfft::num_traits::Zero;
 #[derive(Debug)]
 pub struct Telescope {
     pub diameter: f64,
-    pupil_size: f64,
     obscuration: Option<f64>,
     resolution: f64,
 }
@@ -16,7 +17,6 @@ impl Default for Telescope {
         Self {
             diameter: 1f64,
             obscuration: Default::default(),
-            pupil_size: 2f64,
             resolution: 2.5e-2,
         }
     }
@@ -47,7 +47,6 @@ impl TelescopeBuilder {
         Telescope {
             diameter: self.diameter,
             obscuration: self.obscuration,
-            pupil_size: 2. * self.diameter,
             ..Default::default()
         }
     }
@@ -100,13 +99,17 @@ impl Observer for Telescope {
         buffer
     }
 
-    fn show_pupil(&self) -> ImageResult<()> {
+    fn show_pupil<P: AsRef<Path>>(&self, path: Option<P>) -> ImageResult<()> {
         let n = (self.diameter / self.resolution).round() as u32 + 1;
         let mut img = RgbImage::new(n, n);
         img.pixels_mut()
             .zip(self.pupil(None).into_iter())
-            .filter(|(px, pup)| pup.norm() > 0f64)
+            .filter(|(_, pup)| pup.norm() > 0f64)
             .for_each(|(px, _)| *px = Rgb([255, 255, 255]));
-        img.save("telescope_pupil.png")
+        img.save(
+            path.as_ref()
+                .map(|p| p.as_ref())
+                .unwrap_or(Path::new("telescope_pupil.png")),
+        )
     }
 }

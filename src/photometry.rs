@@ -2,6 +2,7 @@
 pub struct Photometry {
     pub wavelength: f64,
     zeropoint: f64,
+    #[allow(dead_code)]
     spectral_bandwidth: f64,
 }
 impl Photometry {

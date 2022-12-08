@@ -17,10 +17,11 @@ impl ZpDft {
     /// Forward Fourier transfrom
     pub fn forward(len: usize) -> Self {
         let mut planner = FftPlanner::new();
+        let fft = planner.plan_fft_forward(len);
         Self {
             zero_padded_buffer: vec![Complex::zero(); len * len],
-            scratch: vec![Complex::zero(); len],
-            fft: planner.plan_fft_forward(len),
+            scratch: vec![Complex::zero(); fft.get_inplace_scratch_len()],
+            fft,
             len: len as i64,
         }
     }

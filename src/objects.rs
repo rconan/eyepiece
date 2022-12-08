@@ -6,6 +6,7 @@ use std::{env, ops::Deref, time::Instant};
 
 type SkyCoordinates = (SkyAngle<f64>, SkyAngle<f64>);
 
+/// A star object
 #[derive(Debug)]
 pub struct Star {
     pub coordinates: SkyCoordinates,
@@ -20,17 +21,21 @@ impl Default for Star {
     }
 }
 impl Star {
+    /// Creates a new `Star` object
     pub fn new(coordinates: SkyCoordinates) -> Self {
         Self {
             coordinates,
             ..Default::default()
         }
     }
+    /// Sets the star magnitude
     pub fn magnitude(mut self, magnitude: f64) -> Self {
         self.magnitude = magnitude;
         self
     }
 }
+
+/// A collection of stars
 pub struct Objects(Vec<Star>);
 impl Deref for Objects {
     type Target = Vec<Star>;
@@ -44,26 +49,77 @@ impl Default for Objects {
         Self(Default::default())
     }
 }
+/// A collection from a single star
 impl From<Star> for Objects {
     fn from(star: Star) -> Self {
         Self(vec![star])
     }
 }
+/// A collection from a set of stars
 impl From<Vec<Star>> for Objects {
     fn from(stars: Vec<Star>) -> Self {
         Self(stars)
     }
 }
+
+/// Spatial distribution of stars
+///
+/// The seed of the random generator can be set with the `SEED` environment variable
 pub enum StarDistribution {
+    /// Uniform distribution
+    ///
+    /// Distributes the stars uniformly in the range `[-h/2,h/2]` independently along the x and y directions with `n` sample total
+    /// ```
+    /// use skyangle::SkyAngle;
+    /// use eyepiece::{Objects, StarDistribution};
+    /// let h = SkyAngle::Arcminute(1f64);
+    /// let n = 150;
+    /// let stars: Objects = StarDistribution::Uniform(h, n).into();
+    /// ```
     Uniform(SkyAngle<f64>, usize),
+    /// Cartesian Lorentz distribution
+    ///
+    /// Distributes the stars according to a Lorentz probability distribution with the origin at `center`
+    /// and independently along the x and y directions with `n` sample total
+    /// ```
+    /// use skyangle::SkyAngle;
+    /// use eyepiece::{Objects, StarDistribution};
+    /// let scale = SkyAngle::Arcminute(0.25f64);
+    /// let n = 150;
+    /// let stars: Objects = StarDistribution::Lorentz {
+    ///     center: None,
+    ///     scale: (scale, scale),
+    ///     n_sample: n,
+    /// }.into();
+    /// ```
     Lorentz {
         center: Option<(SkyAngle<f64>, SkyAngle<f64>)>,
         scale: (SkyAngle<f64>, SkyAngle<f64>),
         n_sample: usize,
     },
+    /// Polar Lorentz distribution
+    ///
+    /// Distributes the stars according to a Lorentz probability distribution with the origin at `center`
+    /// along the radial direction with `n` sample total
+    /// ```
+    /// use skyangle::SkyAngle;
+    /// use eyepiece::{Objects, StarDistribution};
+    /// let scale = SkyAngle::Arcminute(0.25f64);
+    /// let n = 150;
+    /// let stars: Objects = StarDistribution::Globular {
+    ///     center: None,
+    ///     scale: scale,
+    ///     n_sample: n,
+    /// }.into();
+    /// ```
+    Globular {
+        center: Option<(SkyAngle<f64>, SkyAngle<f64>)>,
+        scale: SkyAngle<f64>,
+        n_sample: usize,
+    },
 }
-impl From<StarDistribution> for Objects {
-    fn from(star_dist: StarDistribution) -> Self {
+impl From<&StarDistribution> for Objects {
+    fn from(star_dist: &StarDistribution) -> Self {
         let mut rng: SipRng = if let Ok(seed) = env::var("SEED") {
             Seeder::from(seed).make_rng()
         } else {
@@ -77,7 +133,7 @@ impl From<StarDistribution> for Objects {
                 let h = 0.5 * fov.to_radians();
                 let dist = Uniform::new_inclusive(-h, h);
                 Self(
-                    (0..n_sample)
+                    (0..*n_sample)
                         .map(|_| {
                             Star::new((
                                 SkyAngle::Radian(dist.sample(&mut rng)),
@@ -97,7 +153,7 @@ impl From<StarDistribution> for Objects {
                 let lorentz_x = Cauchy::new(cx.to_radians(), sx.to_radians()).unwrap();
                 let lorentz_y = Cauchy::new(cy.to_radians(), sy.to_radians()).unwrap();
                 Self(
-                    (0..n_sample)
+                    (0..*n_sample)
                         .map(|_| {
                             Star::new((
                                 SkyAngle::Radian(lorentz_x.sample(&mut rng)),
@@ -107,6 +163,30 @@ impl From<StarDistribution> for Objects {
                         .collect(),
                 )
             }
+            StarDistribution::Globular {
+                center,
+                scale,
+                n_sample,
+            } => {
+                let (cx, cy) =
+                    center.map_or((0f64, 0f64), |(x, y)| (x.to_radians(), y.to_radians()));
+                let radius = Cauchy::new(0f64, scale.to_radians()).unwrap();
+                let azimuth = Uniform::new(0f64, 2. * std::f64::consts::PI);
+                let mut stars = vec![];
+                for _ in 0..*n_sample {
+                    let r = radius.sample(&mut rng);
+                    let o = azimuth.sample(&mut rng);
+                    let (so, co) = o.sin_cos();
+                    let (x, y) = (cx + r * co, cy + r * so);
+                    stars.push(Star::new((SkyAngle::Radian(x), SkyAngle::Radian(y))));
+                }
+                stars.into()
+            }
         }
+    }
+}
+impl From<StarDistribution> for Objects {
+    fn from(star_dist: StarDistribution) -> Self {
+        (&star_dist).into()
     }
 }

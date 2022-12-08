@@ -15,5 +15,5 @@ pub trait Observer {
     fn diameter(&self) -> f64;
     fn resolution(&self) -> f64;
     fn pupil(&self, shift: Option<(f64, f64)>) -> Vec<Complex<f64>>;
-    fn show_pupil(&self) -> image::ImageResult<()>;
+    fn show_pupil<P: AsRef<std::path::Path>>(&self, path: Option<P>) -> image::ImageResult<()>;
 }

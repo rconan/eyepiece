@@ -1,9 +1,9 @@
 use image::{ImageResult, Rgb, RgbImage};
 use indicatif::{ProgressBar, ProgressStyle};
 use skyangle::SkyAngle;
-use std::{ops::Deref, path::Path};
+use std::path::Path;
 
-use crate::{objects, Objects, Observer, Photometry, Star, ZpDft};
+use crate::{Objects, Observer, Photometry, ZpDft};
 
 /// Field of view
 pub struct Field<T>
@@ -46,7 +46,7 @@ where
         } else {
             (self.resolution.to_radians() / nyquist).round()
         };
-        let intensity_sampling = (b * (self.field_of_view / self.resolution)).ceil() as usize;
+        let intensity_sampling = (dbg!(b) * (self.field_of_view / self.resolution)).ceil() as usize;
         let pupil_size = b * self.photometry.wavelength / self.resolution.to_radians();
 
         let mut n_dft = (pupil_size / self.observer.resolution()).ceil() as usize;
@@ -60,7 +60,7 @@ where
         let mut buffer = vec![0f64; intensity_sampling.pow(2)];
         let n = intensity_sampling as i32;
         let alpha = self.resolution / b;
-        let mut bar = ProgressBar::new(self.objects.len() as u64);
+        let bar = ProgressBar::new(self.objects.len() as u64);
         bar.set_style(
             ProgressStyle::with_template("[{eta}] {bar:40.cyan/blue} {pos:>5}/{len:5}").unwrap(),
         );
@@ -74,7 +74,7 @@ where
             let fr_x0 = -y.to_radians() - x0 * alpha;
             let fr_y0 = x.to_radians() - y0 * alpha;
 
-            let shift = if (intensity_sampling % 2 == 0) {
+            let shift = if intensity_sampling % 2 == 0 {
                 Some((
                     0.5 / pupil_size + fr_x0 / self.photometry.wavelength,
                     0.5 / pupil_size + fr_y0 / self.photometry.wavelength,
