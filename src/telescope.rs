@@ -1,4 +1,4 @@
-use crate::{photometry, Objects, Observer, Photometry, ZpDft};
+use crate::Observer;
 use image::{ImageResult, Rgb, RgbImage};
 use num_complex::Complex;
 use rustfft::num_traits::Zero;

@@ -1,9 +1,9 @@
+use image::{ImageResult, Rgb, RgbImage};
+use indicatif::{ProgressBar, ProgressStyle};
+use skyangle::SkyAngle;
 use std::{ops::Deref, path::Path};
 
-use image::{ImageResult, Rgb, RgbImage};
-use skyangle::SkyAngle;
-
-use crate::{Objects, Observer, Photometry, Star, ZpDft};
+use crate::{objects, Objects, Observer, Photometry, Star, ZpDft};
 
 /// Field of view
 pub struct Field<T>
@@ -60,8 +60,14 @@ where
         let mut buffer = vec![0f64; intensity_sampling.pow(2)];
         let n = intensity_sampling as i32;
         let alpha = self.resolution / b;
-        dbg!(alpha);
+        let mut bar = ProgressBar::new(self.objects.len() as u64);
+        bar.set_style(
+            ProgressStyle::with_template("[{eta}] {bar:40.cyan/blue} {pos:>5}/{len:5}").unwrap(),
+        );
         for star in self.objects.iter() {
+            bar.inc(1);
+            let n_photon = self.photometry.n_photon(star.magnitude);
+
             let (x, y) = star.coordinates;
             let x0 = -(y / alpha).round();
             let y0 = (x / alpha).round();
@@ -79,7 +85,6 @@ where
                     fr_y0 / self.photometry.wavelength,
                 ))
             };
-            dbg!(shift);
 
             let intensity = zp_dft
                 .reset()
@@ -89,7 +94,6 @@ where
 
             let i0 = x0 as i32;
             let j0 = y0 as i32;
-            dbg!((i0, j0));
 
             for i in 0..n {
                 let ii = i0 + i;
@@ -103,10 +107,11 @@ where
                     }
                     let k = i * n + j;
                     let kk = ii * n + jj;
-                    buffer[kk as usize] += intensity[k as usize];
+                    buffer[kk as usize] += intensity[k as usize] * n_photon;
                 }
             }
         }
+        bar.finish();
 
         let m = b as usize;
         if m == 1 {
