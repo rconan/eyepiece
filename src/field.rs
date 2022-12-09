@@ -5,13 +5,78 @@ use std::path::Path;
 
 use crate::{Objects, Observer, Photometry, ZpDft};
 
+pub enum PixelScale {
+    Nyquist(u32),
+    SkyAngle(SkyAngle<f64>),
+}
+impl Default for PixelScale {
+    fn default() -> Self {
+        Self::Nyquist(1)
+    }
+}
+impl From<SkyAngle<f64>> for PixelScale {
+    fn from(alpha: SkyAngle<f64>) -> Self {
+        PixelScale::SkyAngle(alpha)
+    }
+}
+impl From<u32> for PixelScale {
+    fn from(n: u32) -> Self {
+        PixelScale::Nyquist(n)
+    }
+}
+impl PixelScale {
+    fn get<T: Observer>(&self, observer: &T, photometry: &Photometry) -> f64 {
+        match self {
+            PixelScale::Nyquist(n) => 0.5 * photometry.wavelength / observer.diameter() / *n as f64,
+            PixelScale::SkyAngle(val) => val.to_radians(),
+        }
+    }
+    fn to_nyquist_ratio<T: Observer>(&self, observer: &T, photometry: &Photometry) -> f64 {
+        match self {
+            PixelScale::Nyquist(_) => 1f64,
+            PixelScale::SkyAngle(val) => {
+                (2. * val.to_radians() * observer.diameter() / photometry.wavelength).ceil()
+            }
+        }
+    }
+}
+
+pub enum FieldOfView {
+    PixelScale(usize),
+    SkyAngle(SkyAngle<f64>),
+}
+impl From<SkyAngle<f64>> for FieldOfView {
+    fn from(alpha: SkyAngle<f64>) -> Self {
+        FieldOfView::SkyAngle(alpha)
+    }
+}
+impl From<usize> for FieldOfView {
+    fn from(n: usize) -> Self {
+        FieldOfView::PixelScale(n)
+    }
+}
+impl FieldOfView {
+    #[allow(dead_code)]
+    fn get<T: Observer>(&self, field: &Field<T>) -> f64 {
+        match self {
+            FieldOfView::PixelScale(n) => field.resolution() * *n as f64,
+            FieldOfView::SkyAngle(val) => val.to_radians(),
+        }
+    }
+    fn to_pixelscale_ratio<T: Observer>(&self, field: &Field<T>) -> f64 {
+        match self {
+            FieldOfView::PixelScale(n) => *n as f64,
+            FieldOfView::SkyAngle(val) => val.to_radians() / field.resolution(),
+        }
+    }
+}
 /// Observer field of regard
 pub struct Field<T>
 where
     T: Observer,
 {
-    resolution: SkyAngle<f64>,
-    field_of_view: SkyAngle<f64>,
+    pixel_scale: PixelScale,
+    field_of_view: FieldOfView,
     photometry: Photometry,
     objects: Objects,
     pub observer: T,
@@ -21,37 +86,42 @@ where
     T: Observer,
 {
     /// Creates a new field
-    pub fn new<P: Into<Photometry>, O: Into<Objects>>(
-        resolution: SkyAngle<f64>,
-        field_of_view: SkyAngle<f64>,
+    pub fn new<X, F, P, O>(
+        resolution: X,
+        field_of_view: F,
         photometric_band: P,
         objects: O,
         observer: T,
-    ) -> Self {
+    ) -> Self
+    where
+        X: Into<PixelScale>,
+        F: Into<FieldOfView>,
+        P: Into<Photometry>,
+        O: Into<Objects>,
+    {
         Self {
-            resolution,
-            field_of_view,
+            pixel_scale: resolution.into(),
+            field_of_view: field_of_view.into(),
             photometry: photometric_band.into(),
             objects: objects.into(),
             observer,
         }
     }
+    fn resolution(&self) -> f64 {
+        self.pixel_scale.get(&self.observer, &self.photometry)
+    }
     /// Computes field-of-view intensity map
     pub fn intensity(&self) -> Vec<f64> {
         // Telescope Nyquist-Shannon sampling criteria
-        let nyquist = 0.5 * self.photometry.wavelength / self.observer.diameter();
+        // let nyquist = 0.5 * self.photometry.wavelength / self.observer.diameter();
         // Image resolution to sampling criteria ratio
-        let b = if (self.resolution.to_radians() - nyquist)
-            <= SkyAngle::MilliArcsec(1f64).to_radians()
-        {
-            1f64
-        } else {
-            (self.resolution.to_radians() / nyquist).round() // todo: should be ceil
-        };
+        let b = self
+            .pixel_scale
+            .to_nyquist_ratio(&self.observer, &self.photometry);
         // Intensity sampling (oversampled wrt. image by factor b>=1)
-        let intensity_sampling = (b * (self.field_of_view / self.resolution)).ceil() as usize;
+        let intensity_sampling = (b * self.field_of_view.to_pixelscale_ratio(self)).ceil() as usize;
         // Pupil size according to intensity angular resolution
-        let pupil_size = b * self.photometry.wavelength / self.resolution.to_radians();
+        let pupil_size = b * self.photometry.wavelength / self.resolution();
         // FFT sampling based on pupil spatial resolution
         let mut n_dft = (pupil_size / self.observer.resolution()).ceil() as usize;
         // Match parity of FFT and intensity sampling if the latter is larger
@@ -64,7 +134,7 @@ where
         // star image stacking buffer
         let mut buffer = vec![0f64; intensity_sampling.pow(2)];
         let n = intensity_sampling as i32;
-        let alpha = self.resolution / b;
+        let alpha = self.resolution() / b;
         let bar = ProgressBar::new(self.objects.len() as u64);
         bar.set_style(
             ProgressStyle::with_template("[{eta}] {bar:40.cyan/blue} {pos:>5}/{len:5}").unwrap(),
@@ -151,7 +221,7 @@ where
         intensity.iter_mut().for_each(|i| *i /= max_intensity);
 
         let lut = colorous::CUBEHELIX;
-        let n_px = (self.field_of_view / self.resolution).ceil() as usize;
+        let n_px = self.field_of_view.to_pixelscale_ratio(self).ceil() as usize;
         let mut img = RgbImage::new(n_px as u32, n_px as u32);
         img.pixels_mut().zip(&intensity).for_each(|(p, i)| {
             *p = Rgb(lut.eval_continuous(*i).into_array());

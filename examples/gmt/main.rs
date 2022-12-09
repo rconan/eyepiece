@@ -1,18 +1,9 @@
-use eyepiece::{Field, Gmt, Observer, Photometry, Star};
-use skyangle::SkyAngle;
+use eyepiece::{Field, Gmt, Observer, Star};
 
 fn main() -> anyhow::Result<()> {
     let gmt = Gmt::new();
     gmt.show_pupil(None)?;
-    let photometry: Photometry = "V".into();
-    let alpha = photometry.wavelength / gmt.diameter() / 4.;
-    let mut field = Field::new(
-        SkyAngle::Radian(alpha),
-        SkyAngle::Radian(alpha * 101.),
-        photometry,
-        Star::default(),
-        gmt,
-    );
+    let mut field = Field::new(4, 101, "V", Star::default(), gmt);
     field.save("image.png")?;
     Ok(())
 }

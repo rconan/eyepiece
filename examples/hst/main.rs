@@ -1,18 +1,9 @@
-use eyepiece::{Field, Hst, Observer, Photometry, Star};
-use skyangle::SkyAngle;
+use eyepiece::{Field, Hst, Observer, Star};
 
 fn main() -> anyhow::Result<()> {
     let hst = Hst::new();
     hst.show_pupil(None)?;
-    let photometry: Photometry = "V".into();
-    let alpha = photometry.wavelength / hst.diameter() / 16.;
-    let mut field = Field::new(
-        SkyAngle::Radian(alpha),
-        SkyAngle::Radian(alpha * 101.),
-        photometry,
-        Star::default(),
-        hst,
-    );
+    let mut field = Field::new(8, 101, "V", Star::default(), hst);
     field.save("image.png")?;
     Ok(())
 }
