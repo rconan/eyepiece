@@ -32,9 +32,9 @@ pub trait Observer {
         let mut buffer: Vec<Complex<f64>> = vec![Complex::zero(); n_px * n_px];
         if let Some((hx, hy)) = shift {
             for i in 0..n_px {
-                let x = (i as f64 / l - 0.5) * diameter;
+                let y = (i as f64 / l - 0.5) * diameter;
                 for j in 0..n_px {
-                    let y = (j as f64 / l - 0.5) * diameter;
+                    let x = (j as f64 / l - 0.5) * diameter;
                     if self.inside_pupil(x, y) {
                         let k = i * n_px + j;
                         buffer[k] = Complex::new(1f64, 0f64)
@@ -47,9 +47,9 @@ pub trait Observer {
             }
         } else {
             for i in 0..n_px {
-                let x = (i as f64 / l - 0.5) * diameter;
+                let y = (i as f64 / l - 0.5) * diameter;
                 for j in 0..n_px {
-                    let y = (j as f64 / l - 0.5) * diameter;
+                    let x = (j as f64 / l - 0.5) * diameter;
                     if self.inside_pupil(x, y) {
                         let k = i * n_px + j;
                         buffer[k] = Complex::new(1f64, 0f64);
