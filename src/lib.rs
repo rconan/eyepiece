@@ -7,7 +7,7 @@ use num_traits::Zero;
 mod zpdft;
 pub use zpdft::ZpDft;
 mod telescope;
-pub use telescope::{Gmt, Hexagon, Hubble, Jwst, Telescope};
+pub use telescope::{Gmt, Hexagon, Hst, Jwst, Telescope, TelescopeBuilder};
 mod photometry;
 pub use photometry::Photometry;
 mod field;
@@ -16,13 +16,15 @@ mod objects;
 pub use objects::{Objects, Star, StarDistribution};
 
 pub trait Observer {
+    /// Returns telescope diameter
     fn diameter(&self) -> f64;
-
+    /// Returns pupil resolution
     fn resolution(&self) -> f64 {
         2.5e-2
     }
+    /// Checks if a point is inside the pupil
     fn inside_pupil(&self, x: f64, y: f64) -> bool;
-
+    /// Computes the pupil map
     fn pupil(&self, shift: Option<(f64, f64)>) -> Vec<Complex<f64>> {
         let diameter = self.diameter();
         let n_px = (diameter / self.resolution()).round() as usize + 1;
@@ -57,6 +59,7 @@ pub trait Observer {
         }
         buffer
     }
+    /// Saves the pupil in an image file
     fn show_pupil(&self, path: Option<PathBuf>) -> ImageResult<()> {
         let n = (self.diameter() / self.resolution()).round() as u32 + 1;
         let mut img = RgbImage::new(n, n);

@@ -1,4 +1,4 @@
-use eyepiece::{Field, Gmt, Hubble, Jwst, Observer, StarDistribution};
+use eyepiece::{Field, Gmt, Hst, Jwst, Observer, StarDistribution};
 use skyangle::SkyAngle;
 use std::path::Path;
 use std::thread;
@@ -17,22 +17,22 @@ fn main() -> anyhow::Result<()> {
     let alpha = SkyAngle::MilliArcsec(5f64);
     println!("Resolution: {:.3}mas", alpha);
     let fov = SkyAngle::Arcsecond(1f64);
-    // let scale = SkyAngle::Radian(fov / 2.);
-    // let stars = StarDistribution::Globular {
+    let scale = SkyAngle::Radian(fov / 2.);
+    let stars = StarDistribution::Globular {
+        center: None,
+        scale,
+        n_sample: 500,
+    };
+    // let scale = SkyAngle::Radian(fov / 10.);
+    // let stars = StarDistribution::Lorentz {
     //     center: None,
-    //     scale,
+    //     scale: (scale, scale),
     //     n_sample: 150,
     // };
-    let scale = SkyAngle::Radian(fov / 10.);
-    let stars = StarDistribution::Lorentz {
-        center: None,
-        scale: (scale, scale),
-        n_sample: 150,
-    };
 
     thread::scope(|s| {
         s.spawn(|| {
-            let mut field = Field::new(alpha, fov, field_band, &stars, Hubble::new());
+            let mut field = Field::new(alpha, fov, field_band, &stars, Hst::new());
             field
                 .observer
                 .show_pupil(Some(Path::new(&format!("hubble_pupil.png")).into()))

@@ -1,3 +1,13 @@
+/**
+Star photometry
+
+Photometry is available for the following bands: V, R, I, J, H and K
+## Example
+```
+use eyepiece::Photometry;
+let photometry: Photometry = "V".into();
+```
+*/
 #[derive(Debug)]
 pub struct Photometry {
     pub wavelength: f64,
@@ -6,12 +16,16 @@ pub struct Photometry {
     spectral_bandwidth: f64,
 }
 impl Photometry {
+    /// Returns the number of photon for the given magnitude
     pub fn n_photon(&self, magnitude: f64) -> f64 {
         self.zeropoint * 10f64.powf(-0.4 * magnitude)
     }
 }
 
 impl From<&str> for Photometry {
+    /// Astronomical photometric bands
+    ///
+    /// Converts the bands V, R, I, J, H and K into star [Photometry]
     fn from(band: &str) -> Self {
         match band {
             "V" => Photometry {

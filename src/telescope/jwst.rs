@@ -4,12 +4,16 @@ use num_complex::Complex;
 
 use crate::Observer;
 
+/// Hexagonal pupil
 #[derive(Debug)]
 pub struct Hexagon {
     origin: (f64, f64),
     flat_to_flat: f64,
 }
 impl Hexagon {
+    /// Creates a new hexagon
+    ///
+    /// The hexagon is set by its origin and flat-to-flat size
     pub fn new(origin: (f64, f64), flat_to_flat: f64) -> Self {
         Self {
             origin,
@@ -29,7 +33,7 @@ impl Observer for Hexagon {
         let d = self.flat_to_flat * 0.5;
         for o in [-30f64.to_radians(), 30f64.to_radians()] {
             let (so, co) = o.sin_cos();
-            let xp = (x - cx) * co - (y - cy) * so;
+            let xp = (x - cx) * co + (y - cy) * so;
             if xp.abs() > d {
                 return false;
             }
@@ -41,6 +45,7 @@ impl Observer for Hexagon {
     }
 }
 
+/// James Webb Telescope
 #[derive(Debug)]
 pub struct Jwst(Vec<Hexagon>);
 impl Deref for Jwst {
@@ -51,6 +56,7 @@ impl Deref for Jwst {
     }
 }
 impl Jwst {
+    /// Creates a James Webb Telescope object
     pub fn new() -> Self {
         let f2f = 1.32;
         Self(
@@ -67,7 +73,7 @@ impl Jwst {
                 }))
                 .chain((0..6).map(|i| {
                     let o = (30. + i as f64 * 60.).to_radians();
-                    let z = Complex::from_polar(2. * f2f,o);
+                    let z = Complex::from_polar(2. * f2f, o);
                     Hexagon::new((z.re, z.im), f2f)
                 }))
                 .collect(),

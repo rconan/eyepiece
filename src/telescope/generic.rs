@@ -16,6 +16,7 @@ impl Default for Telescope {
     }
 }
 
+/// Generic [Telescope] builder
 pub struct TelescopeBuilder {
     diameter: f64,
     obscuration: Option<f64>,
