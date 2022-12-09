@@ -1,5 +1,5 @@
 use image::{ImageResult, Rgb, RgbImage};
-use indicatif::{ProgressBar, ProgressStyle};
+use indicatif::ProgressBar;
 use skyangle::SkyAngle;
 use std::path::Path;
 
@@ -111,7 +111,7 @@ where
         self.pixel_scale.get(&self.observer, &self.photometry)
     }
     /// Computes field-of-view intensity map
-    pub fn intensity(&self) -> Vec<f64> {
+    pub fn intensity(&self, bar: Option<ProgressBar>) -> Vec<f64> {
         // Telescope Nyquist-Shannon sampling criteria
         // let nyquist = 0.5 * self.photometry.wavelength / self.observer.diameter();
         // Image resolution to sampling criteria ratio
@@ -135,12 +135,8 @@ where
         let mut buffer = vec![0f64; intensity_sampling.pow(2)];
         let n = intensity_sampling as i32;
         let alpha = self.resolution() / b;
-        let bar = ProgressBar::new(self.objects.len() as u64);
-        bar.set_style(
-            ProgressStyle::with_template("[{eta}] {bar:40.cyan/blue} {pos:>5}/{len:5}").unwrap(),
-        );
         for star in self.objects.iter() {
-            bar.inc(1);
+            bar.as_ref().map(|b| b.inc(1));
             // todo: check if star is within FOV (rejection criteria?)
             let n_photon = self.photometry.n_photon(star.magnitude);
             // star coordinates
@@ -188,7 +184,7 @@ where
                 }
             }
         }
-        bar.finish();
+        bar.as_ref().map(|b| b.finish());
 
         let m = b as usize;
         if m == 1 {
@@ -215,8 +211,8 @@ where
         image
     }
     /// Computes image and save it to file
-    pub fn save<P: AsRef<Path>>(&mut self, path: P) -> ImageResult<()> {
-        let mut intensity = self.intensity();
+    pub fn save<P: AsRef<Path>>(&mut self, path: P, bar: Option<ProgressBar>) -> ImageResult<()> {
+        let mut intensity = self.intensity(bar);
         let max_intensity = intensity.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
         intensity.iter_mut().for_each(|i| *i /= max_intensity);
 
