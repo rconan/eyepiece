@@ -5,7 +5,6 @@ use crate::Observer;
 pub struct Telescope {
     pub diameter: f64,
     obscuration: Option<f64>,
-    resolution: f64,
 }
 
 impl Default for Telescope {
@@ -13,7 +12,6 @@ impl Default for Telescope {
         Self {
             diameter: 1f64,
             obscuration: Default::default(),
-            resolution: 2.5e-2,
         }
     }
 }
@@ -51,10 +49,6 @@ impl TelescopeBuilder {
 impl Observer for Telescope {
     fn diameter(&self) -> f64 {
         self.diameter
-    }
-
-    fn resolution(&self) -> f64 {
-        self.resolution
     }
 
     fn inside_pupil(&self, x: f64, y: f64) -> bool {

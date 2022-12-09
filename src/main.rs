@@ -1,11 +1,8 @@
-use eyepiece::{Field, Observer, StarDistribution, Telescope};
+use eyepiece::{Field, Gmt, Hubble, Jwst, Observer, StarDistribution};
 use skyangle::SkyAngle;
+use std::path::Path;
+use std::thread;
 fn main() -> anyhow::Result<()> {
-    // let tel: Telescope = Default::default();
-    let hubble = Telescope::new(2.4).obscuration(0.3).build();
-    let jwst = Telescope::new(6.5).obscuration(0.74).build();
-    let gmt = Telescope::new(25.5).obscuration(3.6).build();
-
     // let star =
     //     Star::new((SkyAngle::Radian(-1.5 * alpha), SkyAngle::Radian(3. * alpha))).magnitude(-1.);
     // StarDistribution::Lorentz {
@@ -17,7 +14,7 @@ fn main() -> anyhow::Result<()> {
     // vec![Default::default(), star],
 
     let field_band = "K";
-    let alpha = SkyAngle::MilliArcsec(10f64);
+    let alpha = SkyAngle::MilliArcsec(5f64);
     println!("Resolution: {:.3}mas", alpha);
     let fov = SkyAngle::Arcsecond(1f64);
     // let scale = SkyAngle::Radian(fov / 2.);
@@ -33,15 +30,34 @@ fn main() -> anyhow::Result<()> {
         n_sample: 150,
     };
 
-    for (tel, tag) in [hubble, jwst, gmt]
-        .into_iter()
-        .zip(["hubble", "jwst", "gmt"])
-    {
-        let mut field = Field::new(alpha, fov, field_band, &stars, tel);
-        field
-            .observer
-            .show_pupil(Some(format!("{tag}_pupil.png")))?;
-        field.save(format!("{tag}_field{field_band}.tiff"))?;
-    }
+    thread::scope(|s| {
+        s.spawn(|| {
+            let mut field = Field::new(alpha, fov, field_band, &stars, Hubble::new());
+            field
+                .observer
+                .show_pupil(Some(Path::new(&format!("hubble_pupil.png")).into()))
+                .unwrap();
+            field
+                .save(format!("hubble_field{field_band}.tiff"))
+                .unwrap();
+        });
+        s.spawn(|| {
+            let mut field = Field::new(alpha, fov, field_band, &stars, Jwst::new());
+            field
+                .observer
+                .show_pupil(Some(Path::new(&format!("jwst_pupil.png")).into()))
+                .unwrap();
+            field.save(format!("jwst_field{field_band}.tiff")).unwrap();
+        });
+        s.spawn(|| {
+            let mut field = Field::new(alpha, fov, field_band, &stars, Gmt::new());
+            field
+                .observer
+                .show_pupil(Some(Path::new(&format!("gmt_pupil.png")).into()))
+                .unwrap();
+            field.save(format!("gmt_field{field_band}.tiff")).unwrap();
+        });
+    });
+
     Ok(())
 }
