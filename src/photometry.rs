@@ -1,13 +1,11 @@
-/**
-Star photometry
-
-Photometry is available for the following bands: V, R, I, J, H and K
-## Example
-```
-use eyepiece::Photometry;
-let photometry: Photometry = "V".into();
-```
-*/
+/// Star photometry
+///
+/// Photometry is available for the following bands: V, R, I, J, H and K
+/// ## Example
+/// ```
+/// use eyepiece::Photometry;
+/// let photometry: Photometry = "V".into();
+/// ```
 #[derive(Debug)]
 pub struct Photometry {
     pub wavelength: f64,
