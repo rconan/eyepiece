@@ -1,3 +1,4 @@
+/// Star photometry
 #[derive(Debug)]
 pub struct Photometry {
     pub wavelength: f64,
@@ -12,6 +13,9 @@ impl Photometry {
 }
 
 impl From<&str> for Photometry {
+    /// Astronomical photometric bands
+    ///
+    /// Converts the bands V, R, I, J, H and K into star [Photometry]
     fn from(band: &str) -> Self {
         match band {
             "V" => Photometry {

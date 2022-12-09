@@ -4,6 +4,7 @@ use num_complex::Complex;
 
 use crate::Observer;
 
+/// Hexagonal pupil
 #[derive(Debug)]
 pub struct Hexagon {
     origin: (f64, f64),
@@ -41,6 +42,7 @@ impl Observer for Hexagon {
     }
 }
 
+/// James Webb Telescope
 #[derive(Debug)]
 pub struct Jwst(Vec<Hexagon>);
 impl Deref for Jwst {
@@ -67,7 +69,7 @@ impl Jwst {
                 }))
                 .chain((0..6).map(|i| {
                     let o = (30. + i as f64 * 60.).to_radians();
-                    let z = Complex::from_polar(2. * f2f,o);
+                    let z = Complex::from_polar(2. * f2f, o);
                     Hexagon::new((z.re, z.im), f2f)
                 }))
                 .collect(),

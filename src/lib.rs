@@ -7,7 +7,7 @@ use num_traits::Zero;
 mod zpdft;
 pub use zpdft::ZpDft;
 mod telescope;
-pub use telescope::{Gmt, Hexagon, Hubble, Jwst, Telescope};
+pub use telescope::{Gmt, Hexagon, Hst, Jwst, Telescope, TelescopeBuilder};
 mod photometry;
 pub use photometry::Photometry;
 mod field;

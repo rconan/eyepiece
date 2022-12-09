@@ -39,14 +39,14 @@ where
     }
     pub fn intensity(&self) -> Vec<f64> {
         let nyquist = 0.5 * self.photometry.wavelength / self.observer.diameter();
-        let b = if (self.resolution.to_radians() - dbg!(nyquist))
+        let b = if (self.resolution.to_radians() - nyquist)
             <= SkyAngle::MilliArcsec(1f64).to_radians()
         {
             1f64
         } else {
             (self.resolution.to_radians() / nyquist).round()
         };
-        let intensity_sampling = (dbg!(b) * (self.field_of_view / self.resolution)).ceil() as usize;
+        let intensity_sampling = (b * (self.field_of_view / self.resolution)).ceil() as usize;
         let pupil_size = b * self.photometry.wavelength / self.resolution.to_radians();
 
         let mut n_dft = (pupil_size / self.observer.resolution()).ceil() as usize;
@@ -54,7 +54,7 @@ where
             n_dft += 1;
         }
 
-        let mut zp_dft = ZpDft::forward(dbg!(n_dft));
+        let mut zp_dft = ZpDft::forward(n_dft);
 
         // stacking
         let mut buffer = vec![0f64; intensity_sampling.pow(2)];
@@ -118,9 +118,8 @@ where
             return buffer;
         }
         // binning
-        dbg!(buffer.len());
         let n = intensity_sampling / m;
-        let mut image = vec![0f64; dbg!(n) * n];
+        let mut image = vec![0f64; n * n];
         for i in 0..n {
             let ii = i * m;
             for j in 0..n {

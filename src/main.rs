@@ -1,4 +1,4 @@
-use eyepiece::{Field, Gmt, Hubble, Jwst, Observer, StarDistribution};
+use eyepiece::{Field, Gmt, Hst, Jwst, Observer, StarDistribution};
 use skyangle::SkyAngle;
 use std::path::Path;
 use std::thread;
@@ -32,7 +32,7 @@ fn main() -> anyhow::Result<()> {
 
     thread::scope(|s| {
         s.spawn(|| {
-            let mut field = Field::new(alpha, fov, field_band, &stars, Hubble::new());
+            let mut field = Field::new(alpha, fov, field_band, &stars, Hst::new());
             field
                 .observer
                 .show_pupil(Some(Path::new(&format!("hubble_pupil.png")).into()))

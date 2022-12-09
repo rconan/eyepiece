@@ -9,20 +9,21 @@ pub use jwst::{Hexagon, Jwst};
 
 use crate::Observer;
 
-pub struct Hubble(Telescope);
-impl Deref for Hubble {
+/// Hubble Space Telescope
+pub struct Hst(Telescope);
+impl Deref for Hst {
     type Target = Telescope;
 
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
-impl Hubble {
+impl Hst {
     pub fn new() -> Self {
         Self(Telescope::new(2.4).obscuration(0.3).build())
     }
 }
-impl Observer for Hubble {
+impl Observer for Hst {
     fn diameter(&self) -> f64 {
         self.0.diameter()
     }
