@@ -20,8 +20,10 @@ impl Photometry {
     }
 }
 
+/// Astronomical photometric bands
 pub struct PhotometricBands<'a>([&'a str; 6]);
 impl<'a> Default for PhotometricBands<'a> {
+    /// Returns the array `["V", "R", "I", "J", "H", "K"]`
     fn default() -> Self {
         Self(["V", "R", "I", "J", "H", "K"])
     }
@@ -35,7 +37,6 @@ impl<'a> IntoIterator for PhotometricBands<'a> {
         self.0.into_iter()
     }
 }
-
 impl From<&str> for Photometry {
     /// Astronomical photometric bands
     ///

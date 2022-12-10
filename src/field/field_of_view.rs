@@ -3,9 +3,13 @@ use skyangle::SkyAngle;
 use super::Field;
 use crate::{Observer, Photometry};
 
+/// Field-of-view possible representations ...
 pub enum FieldOfView {
+    /// ... as a multiple of the pixel scale
     PixelScale(usize),
+    /// ... as a multiple of the pixel scale in the given [photometric band](crate::PhotometricBands)
     PixelScaleAt(usize, String),
+    /// ... as an [angle in the sky](https://docs.rs/skyangle/)
     SkyAngle(SkyAngle<f64>),
 }
 impl From<SkyAngle<f64>> for FieldOfView {
