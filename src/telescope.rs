@@ -9,6 +9,7 @@ pub use jwst::{Hexagon, Jwst};
 
 use crate::Observer;
 
+#[derive(Debug, Clone, Copy)]
 /// Hubble Space Telescope
 pub struct Hst(Telescope);
 impl Deref for Hst {

@@ -20,6 +20,22 @@ impl Photometry {
     }
 }
 
+pub struct PhotometricBands<'a>([&'a str; 6]);
+impl<'a> Default for PhotometricBands<'a> {
+    fn default() -> Self {
+        Self(["V", "R", "I", "J", "H", "K"])
+    }
+}
+impl<'a> IntoIterator for PhotometricBands<'a> {
+    type Item = &'a str;
+
+    type IntoIter = std::array::IntoIter<&'a str, 6>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}
+
 impl From<&str> for Photometry {
     /// Astronomical photometric bands
     ///

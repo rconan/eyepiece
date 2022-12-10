@@ -9,9 +9,9 @@ pub use zpdft::ZpDft;
 mod telescope;
 pub use telescope::{Gmt, Hexagon, Hst, Jwst, Telescope, TelescopeBuilder};
 mod photometry;
-pub use photometry::Photometry;
+pub use photometry::{PhotometricBands, Photometry};
 mod field;
-pub use field::{Field, PixelScale};
+pub use field::{Field, FieldOfView, PixelScale};
 mod objects;
 pub use objects::{Objects, Star, StarDistribution};
 
