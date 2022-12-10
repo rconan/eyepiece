@@ -1,7 +1,7 @@
 use crate::Observer;
 
 /// Generic circular telescope
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Telescope {
     pub diameter: f64,
     obscuration: Option<f64>,

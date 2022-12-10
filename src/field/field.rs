@@ -10,7 +10,7 @@ pub struct Field<T>
 where
     T: Observer,
 {
-    pixel_scale: PixelScale,
+    pub(super) pixel_scale: PixelScale,
     field_of_view: FieldOfView,
     photometry: Photometry,
     objects: Objects,
