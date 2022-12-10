@@ -11,7 +11,7 @@ pub use telescope::{Gmt, Hexagon, Hst, Jwst, Telescope, TelescopeBuilder};
 mod photometry;
 pub use photometry::Photometry;
 mod field;
-pub use field::Field;
+pub use field::{Field, PixelScale};
 mod objects;
 pub use objects::{Objects, Star, StarDistribution};
 
