@@ -37,6 +37,7 @@ impl<'a> IntoIterator for PhotometricBands<'a> {
         self.0.into_iter()
     }
 }
+
 impl From<&str> for Photometry {
     /// Astronomical photometric bands
     ///
