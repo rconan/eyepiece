@@ -4,6 +4,7 @@ use crate::{Observer, Photometry};
 
 pub enum PixelScale {
     Nyquist(u32),
+    NyquistAt(u32, String),
     NyquistFraction(u32),
     SkyAngle(SkyAngle<f64>),
 }
@@ -24,6 +25,10 @@ impl PixelScale {
                 0.5 * photometry.wavelength / observer.diameter() / *n as f64
             }
             PixelScale::Nyquist(n) => 0.5 * photometry.wavelength / observer.diameter() * *n as f64,
+            PixelScale::NyquistAt(n, band) => {
+                let photometry: Photometry = band.into();
+                0.5 * photometry.wavelength / observer.diameter() * *n as f64
+            }
             PixelScale::SkyAngle(val) => val.to_radians(),
         }
     }
@@ -35,6 +40,7 @@ impl PixelScale {
         match self {
             PixelScale::NyquistFraction(_) => 1f64,
             PixelScale::Nyquist(n) => *n as f64,
+            PixelScale::NyquistAt(n, _) => *n as f64,
             PixelScale::SkyAngle(val) => {
                 (2. * val.to_radians() * observer.diameter() / photometry.wavelength).ceil()
             }

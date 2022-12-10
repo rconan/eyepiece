@@ -60,3 +60,13 @@ impl From<&str> for Photometry {
         }
     }
 }
+impl From<&String> for Photometry {
+    fn from(band: &String) -> Self {
+        band.as_str().into()
+    }
+}
+impl From<String> for Photometry {
+    fn from(band: String) -> Self {
+        band.as_str().into()
+    }
+}
