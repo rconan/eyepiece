@@ -13,7 +13,7 @@ pub use photometry::{PhotometricBands, Photometry};
 mod field;
 pub use field::{Field, FieldOfView, PixelScale};
 mod objects;
-pub use objects::{Objects, Star, StarDistribution};
+pub use objects::{MagnitudeDistribution, Objects, Star, StarDistribution};
 
 pub trait Observer {
     /// Returns telescope diameter
@@ -58,6 +58,14 @@ pub trait Observer {
             }
         }
         buffer
+    }
+    /// Returns the pupil area
+    fn area(&self) -> f64 {
+        self.pupil(None)
+            .into_iter()
+            .filter_map(|p| (p.norm_sqr() > 0f64).then(|| 1f64))
+            .sum::<f64>()
+            * self.resolution().powi(2)
     }
     /// Saves the pupil in an image file
     fn show_pupil(&self, path: Option<PathBuf>) -> ImageResult<()> {

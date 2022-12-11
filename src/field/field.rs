@@ -1,6 +1,8 @@
 use image::{ImageResult, Rgb, RgbImage};
 use indicatif::ProgressBar;
-use std::path::Path;
+use rand_distr::{Distribution, Poisson};
+use skyangle::Conversion;
+use std::{fmt::Display, path::Path};
 
 use super::{FieldOfView, PixelScale};
 use crate::{Objects, Observer, Photometry, ZpDft};
@@ -14,7 +16,47 @@ where
     field_of_view: FieldOfView,
     photometry: Photometry,
     objects: Objects,
+    exposure: f64,
     pub observer: T,
+}
+impl<T: Observer> Display for Field<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "Field in {} band", self.photometry)?;
+        writeln!(f, " . pixel scale: {:.3}mas", self.resolution().to_mas())?;
+        writeln!(
+            f,
+            " . field-of-view: {:.3}arcsec",
+            self.field_of_view.get(self).to_arcsec()
+        )?;
+        writeln!(f, " . pupil area: {:.3}m^2", self.observer.area())?;
+        let n_star: usize = self
+            .objects
+            .iter()
+            .filter_map(|star| {
+                let half_fov = self.field_of_view.get(self) * 0.5;
+                let (x, y) = star.coordinates;
+                if x.to_radians().abs() <= half_fov && y.to_radians().abs() <= half_fov {
+                    Some(1)
+                } else {
+                    None
+                }
+            })
+            .sum();
+        writeln!(f, " . star #: {n_star}")?;
+        let magnitude_max = self
+            .objects
+            .iter()
+            .fold(f64::NEG_INFINITY, |a, s| a.max(s.magnitude));
+        let magnitude_min = self
+            .objects
+            .iter()
+            .fold(f64::INFINITY, |a, s| a.min(s.magnitude));
+        writeln!(
+            f,
+            " . star magnitudes: [{magnitude_min:.1},{magnitude_max:.1}]"
+        )?;
+        writeln!(f, " . exposure time: {}s", self.exposure)
+    }
 }
 impl<T> Field<T>
 where
@@ -39,11 +81,19 @@ where
             field_of_view: field_of_view.into(),
             photometry: photometric_band.into(),
             objects: objects.into(),
+            exposure: 1f64,
             observer,
         }
     }
-    pub(super) fn resolution(&self) -> f64 {
+    pub fn exposure(mut self, value: f64) -> Self {
+        self.exposure = value;
+        self
+    }
+    pub fn resolution(&self) -> f64 {
         self.pixel_scale.get(&self.observer, &self.photometry)
+    }
+    pub fn field_of_view(&self) -> f64 {
+        self.field_of_view.get(self)
     }
     /// Computes field-of-view intensity map
     pub fn intensity(&self, bar: Option<ProgressBar>) -> Vec<f64> {
@@ -70,10 +120,12 @@ where
         let mut buffer = vec![0f64; intensity_sampling.pow(2)];
         let n = intensity_sampling as i32;
         let alpha = self.resolution() / b;
+        let mut rng = rand::thread_rng();
         for star in self.objects.iter() {
             bar.as_ref().map(|b| b.inc(1));
             // todo: check if star is within FOV (rejection criteria?)
-            let n_photon = self.photometry.n_photon(star.magnitude);
+            let n_photon =
+                self.photometry.n_photon(star.magnitude) * self.observer.area() * self.exposure;
             // star coordinates
             let (x, y) = star.coordinates;
             // integer part
@@ -100,6 +152,16 @@ where
                 .process(self.observer.pupil(shift).as_slice())
                 .resize(intensity_sampling)
                 .norm_sqr();
+            // intensity set to # of photon & Poisson noise
+            let intensity_sum: f64 = intensity.iter().cloned().sum();
+            let inorm = n_photon / intensity_sum;
+            let intensity: Vec<f64> = intensity
+                .iter()
+                .map(|i| {
+                    let poi = Poisson::new(*i * inorm).unwrap();
+                    poi.sample(&mut rng)
+                })
+                .collect();
             // shift and add star images
             let i0 = x0 as i32;
             let j0 = y0 as i32;

@@ -1,8 +1,15 @@
-use rand::distributions::{Distribution, Uniform};
-use rand_distr::Cauchy;
+use rand::{
+    distributions::{Distribution, Uniform},
+    Rng,
+};
+use rand_distr::{Cauchy, Normal};
 use rand_seeder::{Seeder, SipRng};
 use skyangle::SkyAngle;
-use std::{env, ops::Deref, time::Instant};
+use std::{
+    env,
+    ops::{Deref, DerefMut},
+    time::Instant,
+};
 
 type SkyCoordinates = (SkyAngle<f64>, SkyAngle<f64>);
 
@@ -42,6 +49,11 @@ impl Deref for Objects {
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+impl DerefMut for Objects {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
     }
 }
 impl Default for Objects {
@@ -188,5 +200,51 @@ impl From<&StarDistribution> for Objects {
 impl From<StarDistribution> for Objects {
     fn from(star_dist: StarDistribution) -> Self {
         (&star_dist).into()
+    }
+}
+pub enum MagnitudeDistribution {
+    Normal(f64, f64, usize),
+    LogNormal(f64, f64, f64, usize),
+}
+impl MagnitudeDistribution {
+    pub fn get(&self) -> Vec<f64> {
+        let mut rng: SipRng = if let Ok(seed) = env::var("SEED") {
+            Seeder::from(seed).make_rng()
+        } else {
+            let now = Instant::now();
+            Seeder::from(now).make_rng()
+        };
+        match self {
+            MagnitudeDistribution::Normal(mean, std_dev, n_sample) => {
+                let dist = Normal::new(*mean, *std_dev).unwrap();
+                (&mut rng).sample_iter(dist).take(*n_sample).collect()
+            }
+            MagnitudeDistribution::LogNormal(m0, mu, sigma, n_sample) => {
+                let mean = (mu.powi(2) / (mu.powi(2) + sigma.powi(2)).sqrt()).ln();
+                let sigma = (1. + (sigma / mu).powi(2)).ln().sqrt();
+                let dist = Normal::new(mean, sigma).unwrap();
+                (&mut rng)
+                    .sample_iter(dist)
+                    .take(*n_sample)
+                    .map(|m| m0 + m.exp())
+                    .collect()
+            }
+        }
+    }
+}
+impl From<(&StarDistribution, &MagnitudeDistribution)> for Objects {
+    fn from(
+        (coordinate_distribution, magnitude_distribution): (
+            &StarDistribution,
+            &MagnitudeDistribution,
+        ),
+    ) -> Self {
+        let mut stars: Objects = coordinate_distribution.into();
+        let magnitudes = magnitude_distribution.get();
+        stars
+            .iter_mut()
+            .zip(&magnitudes)
+            .for_each(|(star, magnitude)| star.magnitude = *magnitude);
+        stars
     }
 }

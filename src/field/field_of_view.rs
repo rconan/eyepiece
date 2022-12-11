@@ -3,6 +3,7 @@ use skyangle::SkyAngle;
 use super::Field;
 use crate::{Observer, Photometry};
 
+#[derive(Debug, Clone)]
 /// Field-of-view possible representations ...
 pub enum FieldOfView {
     /// ... as a multiple of the pixel scale
@@ -23,8 +24,7 @@ impl From<usize> for FieldOfView {
     }
 }
 impl FieldOfView {
-    #[allow(dead_code)]
-    fn get<T: Observer>(&self, field: &Field<T>) -> f64 {
+    pub(super) fn get<T: Observer>(&self, field: &Field<T>) -> f64 {
         match self {
             FieldOfView::PixelScale(n) => field.resolution() * *n as f64,
             FieldOfView::PixelScaleAt(n, band) => {

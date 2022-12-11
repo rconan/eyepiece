@@ -1,3 +1,5 @@
+use std::{fmt::Display, ops::Deref};
+
 /// Star photometry
 ///
 /// Photometry is available for the following bands: V, R, I, J, H and K
@@ -7,7 +9,31 @@
 /// let photometry: Photometry = "V".into();
 /// ```
 #[derive(Debug)]
-pub struct Photometry {
+pub enum Photometry {
+    V(PhotometryData),
+    R(PhotometryData),
+    I(PhotometryData),
+    J(PhotometryData),
+    H(PhotometryData),
+    K(PhotometryData),
+}
+impl Deref for Photometry {
+    type Target = PhotometryData;
+
+    fn deref(&self) -> &Self::Target {
+        match self {
+            Photometry::V(p) => p,
+            Photometry::R(p) => p,
+            Photometry::I(p) => p,
+            Photometry::J(p) => p,
+            Photometry::H(p) => p,
+            Photometry::K(p) => p,
+        }
+    }
+}
+/// Photometric data
+#[derive(Debug)]
+pub struct PhotometryData {
     pub wavelength: f64,
     zeropoint: f64,
     #[allow(dead_code)]
@@ -44,36 +70,36 @@ impl From<&str> for Photometry {
     /// Converts the bands V, R, I, J, H and K into star [Photometry]
     fn from(band: &str) -> Self {
         match band {
-            "V" => Photometry {
+            "V" => Photometry::V(PhotometryData {
                 wavelength: 0.55e-6,
                 zeropoint: 8.97e9,
                 spectral_bandwidth: 0.09e-6,
-            },
-            "R" => Photometry {
+            }),
+            "R" => Photometry::R(PhotometryData {
                 wavelength: 0.64e-6,
                 zeropoint: 10.87e9,
                 spectral_bandwidth: 0.15e-6,
-            },
-            "I" => Photometry {
+            }),
+            "I" => Photometry::I(PhotometryData {
                 wavelength: 0.79e-6,
                 zeropoint: 7.34e9,
                 spectral_bandwidth: 0.15e-6,
-            },
-            "J" => Photometry {
+            }),
+            "J" => Photometry::J(PhotometryData {
                 wavelength: 1.215e-6,
                 zeropoint: 5.16e9,
                 spectral_bandwidth: 0.26e-6,
-            },
-            "H" => Photometry {
+            }),
+            "H" => Photometry::H(PhotometryData {
                 wavelength: 1.654e-6,
                 zeropoint: 2.99e9,
                 spectral_bandwidth: 0.29e-6,
-            },
-            "K" => Photometry {
+            }),
+            "K" => Photometry::K(PhotometryData {
                 wavelength: 2.179e-6,
                 zeropoint: 1.90e9,
                 spectral_bandwidth: 0.41e-6,
-            },
+            }),
             _ => panic!("expected the photometric band: V, R, I, J, H or K, found {band}"),
         }
     }
@@ -86,5 +112,21 @@ impl From<&String> for Photometry {
 impl From<String> for Photometry {
     fn from(band: String) -> Self {
         band.as_str().into()
+    }
+}
+impl Display for Photometry {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Photometry::V(_) => "V",
+                Photometry::R(_) => "R",
+                Photometry::I(_) => "I",
+                Photometry::J(_) => "J",
+                Photometry::H(_) => "H",
+                Photometry::K(_) => "K",
+            }
+        )
     }
 }

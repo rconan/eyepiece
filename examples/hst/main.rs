@@ -10,6 +10,7 @@ fn main() -> anyhow::Result<()> {
         Star::default(),
         hst,
     );
+    println!("{field}");
     field.save("image.png", None)?;
     Ok(())
 }

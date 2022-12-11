@@ -3,6 +3,7 @@ use crate::Observer;
 /// Generic circular telescope
 #[derive(Debug, Clone, Copy)]
 pub struct Telescope {
+    /// Primary mirror diameter D (Nyquist sampling criteria: λ/2D)
     pub diameter: f64,
     obscuration: Option<f64>,
 }

@@ -2,15 +2,16 @@ use skyangle::SkyAngle;
 
 use crate::{Observer, Photometry};
 
+#[derive(Debug, Clone)]
 /// Pixel scale possible representations ...
 pub enum PixelScale {
-    /// ... as a multiple of the Nyquist sampling criteria
+    /// ... as a multiple of the Nyquist sampling criteria λ/2D
     Nyquist(u32),
-    /// ... as a multiple of the Nyquist sampling criteria in the given [photometric band](crate::PhotometricBands)
+    /// ... as a multiple of the Nyquist sampling criteria λ/2D in the given [photometric band](crate::PhotometricBands)
     NyquistAt(u32, String),
-    /// ... as a fraction of the Nyquist sampling criteria
+    /// ... as a fraction of the Nyquist sampling criteria λ/2D
     NyquistFraction(u32),
-    /// ... as a fraction of the Nyquist sampling criteria in the given [photometric band](crate::PhotometricBands)
+    /// ... as a fraction of the Nyquist sampling criteria λ/2D in the given [photometric band](crate::PhotometricBands)
     NyquistFractionAt(u32, String),
     /// ... as an [angle in the sky](https://docs.rs/skyangle/)
     SkyAngle(SkyAngle<f64>),
