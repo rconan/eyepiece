@@ -124,6 +124,9 @@ where
         for star in self.objects.iter() {
             bar.as_ref().map(|b| b.inc(1));
             // todo: check if star is within FOV (rejection criteria?)
+            if !star.inside_box(self.field_of_view() + self.resolution() * 2.) {
+                continue;
+            }
             let n_photon =
                 self.photometry.n_photon(star.magnitude) * self.observer.area() * self.exposure;
             // star coordinates

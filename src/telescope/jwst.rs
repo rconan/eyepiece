@@ -46,6 +46,8 @@ impl Observer for Hexagon {
 }
 
 /// James Webb Telescope
+///
+/// <img src="https://raw.githubusercontent.com/rconan/eyepiece/main/examples/jwst/telescope_pupil.png" width="20%" alt="JWST pupil">
 #[derive(Debug)]
 pub struct Jwst(Vec<Hexagon>);
 impl Deref for Jwst {

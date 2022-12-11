@@ -2,6 +2,8 @@ use crate::Observer;
 use geotrans::{Conic, Segment, SegmentTrait, Transform, M1};
 
 /// Giant Magellan Telescope
+///
+/// <img src="https://raw.githubusercontent.com/rconan/eyepiece/main/examples/gmt/telescope_pupil.png" width="20%" alt="GMT pupil">
 pub struct Gmt;
 impl Gmt {
     /// Creates a Giant Magellan Telescope object

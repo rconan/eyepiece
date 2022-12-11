@@ -1,3 +1,37 @@
+//! # Eyepiece
+//!
+//! A crate to generate star fields as seen with different telescopes.
+//!
+//! ## Example
+//! A single star in the center of a 21x21 pixels field as seen by the Hubble Space Telescope
+//! with a pixel scale at half Nyquist (i.e. (λ/2D)/2) in V band
+//! ```
+//! use eyepiece::{Hst, Field, PixelScale, Star};
+//! let hst = Hst::new();
+//! let mut field = Field::new(
+//!     PixelScale::NyquistFraction(2),
+//!     21,
+//!     "V",
+//!     Star::default(),
+//!     hst,
+//! );
+//! ```
+//! The field intensity map is computed and saved with
+//! ```no_run
+//! # use eyepiece::{Hst, Field, PixelScale, Star};
+//! # let hst = Hst::new();
+//! # let mut field = Field::new(
+//! #    PixelScale::Nyquist(2),
+//! #    21,
+//! #    "V",
+//! #    Star::default(),
+//! #    hst,
+//! # );
+//! field.save("field.png", None).unwrap();
+//! ```
+//!
+//! More examples can be found [here](https://github.com/rconan/eyepiece/tree/main/examples)
+
 use std::path::{Path, PathBuf};
 
 use image::{ImageResult, Rgb, RgbImage};
@@ -15,6 +49,7 @@ pub use field::{Field, FieldOfView, PixelScale};
 mod objects;
 pub use objects::{MagnitudeDistribution, Objects, Star, StarDistribution};
 
+/// Methods common to all telescopes
 pub trait Observer {
     /// Returns telescope diameter
     fn diameter(&self) -> f64;

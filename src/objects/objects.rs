@@ -9,6 +9,13 @@ pub struct Star {
     pub coordinates: SkyCoordinates,
     pub magnitude: f64,
 }
+impl Star {
+    pub fn inside_box(&self, width: f64) -> bool {
+        let (x, y) = self.coordinates;
+        let h = width / 2.;
+        x.to_radians().abs() <= h && y.to_radians().abs() < h
+    }
+}
 impl Default for Star {
     fn default() -> Self {
         Self {
