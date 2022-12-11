@@ -1,9 +1,11 @@
 use eyepiece::{Field, Gmt, Hst, Jwst, MagnitudeDistribution, PixelScale, Star, StarDistribution};
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 use skyangle::SkyAngle;
-use std::thread;
+use std::{env, thread};
 
 fn main() -> anyhow::Result<()> {
+    env::set_var("SEED", "ruby");
+
     let field_band = "J";
     let n_star = 1000;
     let gmt_res = PixelScale::Nyquist(1);
@@ -19,7 +21,7 @@ fn main() -> anyhow::Result<()> {
     let alpha = SkyAngle::Radian(field.resolution());
     let fov = SkyAngle::Radian(field.field_of_view());
     let coordinates = StarDistribution::Uniform(fov, n_star);
-    let magnitudes = MagnitudeDistribution::LogNormal(31., 0.7, 0.75, n_star);
+    let magnitudes = MagnitudeDistribution::LogNormal(31., 0.7, 0.75);
 
     let mbars = MultiProgress::new();
     let style = "[{eta:>4}] {bar:40.cyan/blue} {pos:>5}/{len:5}";
