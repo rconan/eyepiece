@@ -17,6 +17,7 @@ where
     photometry: Photometry,
     objects: Objects,
     exposure: f64,
+    poisson_noise: bool,
     pub observer: T,
 }
 impl<T: Observer> Display for Field<T> {
@@ -83,10 +84,17 @@ where
             objects: objects.into(),
             exposure: 1f64,
             observer,
+            poisson_noise: false,
         }
     }
+    /// Sets the exposure time in seconds
     pub fn exposure(mut self, value: f64) -> Self {
         self.exposure = value;
+        self
+    }
+    /// Adds photon noise to the image
+    pub fn photon_noise(mut self) -> Self {
+        self.poisson_noise = true;
         self
     }
     pub fn resolution(&self) -> f64 {
@@ -150,7 +158,7 @@ where
                 ))
             };
             // star intensity map
-            let intensity = zp_dft
+            let mut intensity = zp_dft
                 .reset()
                 .process(self.observer.pupil(shift).as_slice())
                 .resize(intensity_sampling)
@@ -158,13 +166,16 @@ where
             // intensity set to # of photon & Poisson noise
             let intensity_sum: f64 = intensity.iter().cloned().sum();
             let inorm = n_photon / intensity_sum;
-            let intensity: Vec<f64> = intensity
-                .iter()
-                .map(|i| {
+            if self.poisson_noise {
+                intensity.iter_mut().for_each(|i| {
                     let poi = Poisson::new(*i * inorm).unwrap();
-                    poi.sample(&mut rng)
+                    *i = poi.sample(&mut rng)
                 })
-                .collect();
+            } else {
+                intensity.iter_mut().for_each(|i| {
+                    *i *= inorm;
+                })
+            };
             // shift and add star images
             let i0 = x0 as i32;
             let j0 = y0 as i32;

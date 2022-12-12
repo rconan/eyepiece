@@ -41,7 +41,8 @@ fn main() -> anyhow::Result<()> {
         (&coordinates, &magnitudes),
         Hst::new(),
     )
-    .exposure(exposure);
+    .exposure(exposure)
+    .photon_noise();
     println!("{hst_field}");
     let mut jwst_field = Field::new(
         alpha,
@@ -50,7 +51,8 @@ fn main() -> anyhow::Result<()> {
         (&coordinates, &magnitudes),
         Jwst::new(),
     )
-    .exposure(exposure);
+    .exposure(exposure)
+    .photon_noise();
     println!("{jwst_field}");
     let mut gmt_field = Field::new(
         gmt_res,
@@ -59,7 +61,8 @@ fn main() -> anyhow::Result<()> {
         (&coordinates, &magnitudes),
         Gmt::new(),
     )
-    .exposure(exposure);
+    .exposure(exposure)
+    .photon_noise();
     println!("{gmt_field}");
 
     thread::scope(|s| {
