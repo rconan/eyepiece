@@ -1,4 +1,6 @@
-use eyepiece::{Field, Gmt, Hst, Jwst, MagnitudeDistribution, PixelScale, Star, StarDistribution, FieldBuilder};
+use eyepiece::{
+    Field, FieldBuilder, Gmt, Hst, Jwst, MagnitudeDistribution, PixelScale, Star, StarDistribution,
+};
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 use skyangle::SkyAngle;
 use std::{env, thread};
@@ -42,7 +44,8 @@ fn main() -> anyhow::Result<()> {
         Hst::new(),
     )
     .exposure(exposure)
-    .photon_noise().build();
+    .photon_noise()
+    .build();
     println!("{hst_field}");
     let mut jwst_field = FieldBuilder::new(
         alpha,
@@ -52,7 +55,8 @@ fn main() -> anyhow::Result<()> {
         Jwst::new(),
     )
     .exposure(exposure)
-    .photon_noise().build();
+    .photon_noise()
+    .build();
     println!("{jwst_field}");
     let mut gmt_field = FieldBuilder::new(
         gmt_res,
@@ -62,7 +66,8 @@ fn main() -> anyhow::Result<()> {
         Gmt::new(),
     )
     .exposure(exposure)
-    .photon_noise().build();
+    .photon_noise()
+    .build();
     println!("{gmt_field}");
 
     thread::scope(|s| {
