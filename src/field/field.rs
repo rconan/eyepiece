@@ -16,8 +16,8 @@ where
     field_of_view: FieldOfView,
     photometry: Photometry,
     objects: Objects,
-    exposure: f64,
-    poisson_noise: bool,
+    pub(super) exposure: f64,
+    pub(super)poisson_noise: bool,
     pub observer: T,
 }
 impl<T: Observer> Display for Field<T> {
@@ -86,16 +86,6 @@ where
             observer,
             poisson_noise: false,
         }
-    }
-    /// Sets the exposure time in seconds
-    pub fn exposure(mut self, value: f64) -> Self {
-        self.exposure = value;
-        self
-    }
-    /// Adds photon noise to the image
-    pub fn photon_noise(mut self) -> Self {
-        self.poisson_noise = true;
-        self
     }
     pub fn resolution(&self) -> f64 {
         self.pixel_scale.get(&self.observer, &self.photometry)
