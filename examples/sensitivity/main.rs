@@ -1,5 +1,6 @@
 use eyepiece::{
-    Field, FieldBuilder, Gmt, Hst, Jwst, MagnitudeDistribution, PixelScale, Star, StarDistribution,
+    Builder, Field, FieldBuilder, Gmt, Hst, Jwst, MagnitudeDistribution, PixelScale, Star,
+    StarDistribution,
 };
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 use skyangle::SkyAngle;
@@ -36,38 +37,32 @@ fn main() -> anyhow::Result<()> {
 
     let exposure = 60. * 15.;
 
-    let mut hst_field = FieldBuilder::new(
-        alpha,
-        fov,
-        field_band,
-        (&coordinates, &magnitudes),
-        Hst::new(),
-    )
-    .exposure(exposure)
-    .photon_noise()
-    .build();
+    let mut hst_field: Field<Hst> = FieldBuilder::new(Hst::new())
+        .pixel_scale(alpha)
+        .field_of_view(fov)
+        .photometry(field_band)
+        .objects((&coordinates, &magnitudes))
+        .exposure(exposure)
+        .photon_noise()
+        .build();
     println!("{hst_field}");
-    let mut jwst_field = FieldBuilder::new(
-        alpha,
-        fov,
-        field_band,
-        (&coordinates, &magnitudes),
-        Jwst::new(),
-    )
-    .exposure(exposure)
-    .photon_noise()
-    .build();
+    let mut jwst_field: Field<Jwst> = FieldBuilder::new(Jwst::new())
+        .pixel_scale(alpha)
+        .field_of_view(fov)
+        .photometry(field_band)
+        .objects((&coordinates, &magnitudes))
+        .exposure(exposure)
+        .photon_noise()
+        .build();
     println!("{jwst_field}");
-    let mut gmt_field = FieldBuilder::new(
-        gmt_res,
-        gmt_fov,
-        field_band,
-        (&coordinates, &magnitudes),
-        Gmt::new(),
-    )
-    .exposure(exposure)
-    .photon_noise()
-    .build();
+    let mut gmt_field: Field<Gmt> = FieldBuilder::new(Gmt::new())
+        .pixel_scale(gmt_res)
+        .field_of_view(gmt_fov)
+        .photometry(field_band)
+        .objects((&coordinates, &magnitudes))
+        .exposure(exposure)
+        .photon_noise()
+        .build();
     println!("{gmt_field}");
 
     thread::scope(|s| {

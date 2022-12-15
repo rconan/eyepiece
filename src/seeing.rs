@@ -9,7 +9,7 @@ use crate::{ObservingMode, Photometry};
 /// ```
 /// use eyepiece::SeeingBuilder;
 /// use skyangle::SkyAngle;
-/// 
+///
 /// let seeing = SeeingBuilder::new(16e-2)
 ///     .zenith_angle(SkyAngle::Degree(30.))
 ///     .outer_scale(30.)
@@ -39,6 +39,17 @@ impl SeeingBuilder {
         Self {
             fried_parameter: self.fried_parameter
                 * zenith_angle.to_radians().cos().powf(3_f64 / 5_f64),
+            ..self
+        }
+    }
+    /// Reduces the seeing by the given fraction
+    pub fn glao(self, corrected_fraction: f64) -> Self {
+        assert!(
+            corrected_fraction < 1f64,
+            "GLAO fraction of correction should be less that 1"
+        );
+        Self {
+            fried_parameter: self.fried_parameter * (1. - corrected_fraction).powf(-3_f64 / 5_f64),
             ..self
         }
     }

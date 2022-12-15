@@ -1,16 +1,20 @@
-use eyepiece::{Field, FieldOfView, Hst, PhotometricBands, PixelScale, Star};
+use std::{env, path::Path};
+
+use eyepiece::{
+    Builder, FieldBuilder, FieldOfView, Hst, PhotometricBands, PixelScale, PolychromaticField,
+};
 
 fn main() -> anyhow::Result<()> {
     let hst = Hst::new();
-    for (i, band) in PhotometricBands::default().into_iter().enumerate() {
-        let mut field = Field::new(
-            PixelScale::NyquistFractionAt(2, "V".to_string()),
-            FieldOfView::PixelScaleAt(61, "K".to_string()),
-            band,
-            Star::default(),
-            hst,
-        );
-        field.save(format!("image{i}{band}.png"), None)?;
-    }
+    let mut field: PolychromaticField<Hst> = FieldBuilder::new(hst)
+        .pixel_scale(PixelScale::NyquistFractionAt(2, "V".to_string()))
+        .field_of_view(FieldOfView::PixelScaleAt(61, "K".to_string()))
+        .polychromatic(PhotometricBands::default().into_iter().collect())
+        .flux(1f64)
+        .build();
+    let path = Path::new(&env::var("CARGO_MANIFEST_DIR")?)
+        .join("examples")
+        .join("polychromatic");
+    field.save(path.join("image.png"), None)?;
     Ok(())
 }
