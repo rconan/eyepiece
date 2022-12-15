@@ -53,6 +53,8 @@ mod objects;
 pub use objects::{MagnitudeDistribution, Objects, Star, StarDistribution};
 mod seeing;
 pub use seeing::SeeingBuilder;
+mod bessel_knu;
+mod optust;
 
 /// Methods common to all telescopes
 pub trait Observer: Clone {
