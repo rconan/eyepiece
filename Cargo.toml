@@ -24,3 +24,7 @@ rand_distr = "0.4.3"
 rand_seeder = "0.2.3"
 rustfft = "6.1.0"
 skyangle = "0.2.0"
+optust = { git = "https://github.com/rconan/optust.git", branch = "main" }
+
+[dev-dependencies]
+env_logger = "0.10.0"

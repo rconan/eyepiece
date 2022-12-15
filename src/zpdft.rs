@@ -1,6 +1,6 @@
 use num_complex::Complex;
 use rustfft::{num_traits::Zero, Fft, FftPlanner};
-use std::sync::Arc;
+use std::{mem, sync::Arc};
 
 type Cpx = Complex<f64>;
 
@@ -29,35 +29,46 @@ impl ZpDft {
         self.zero_padded_buffer = vec![Complex::zero(); (self.len * self.len) as usize];
         self
     }
+    pub fn into_buffer(self) -> Vec<Cpx> {
+        self.zero_padded_buffer
+    }
+    pub fn buffer(&self) -> Vec<Cpx> {
+        self.zero_padded_buffer.clone()
+    }
     /// Inverse Fourier transfrom
     pub fn inverse(len: usize) -> Self {
         let mut planner = FftPlanner::new();
+        let fft = planner.plan_fft_inverse(len);
         Self {
             zero_padded_buffer: vec![Complex::zero(); len * len],
-            scratch: vec![Complex::zero(); len],
-            fft: planner.plan_fft_inverse(len),
+            scratch: vec![Complex::zero(); fft.get_inplace_scratch_len()],
+            fft,
             len: len as i64,
         }
     }
-    // Zero-pads the FFT buffer
-    fn zero_padding(&mut self, buffer: &[Cpx]) {
+    /// Zero-pads the FFT buffer
+    pub fn zero_padding(&mut self, mut buffer: Vec<Cpx>) -> &mut Self {
         let n2 = buffer.len() as i64;
         let n = (n2 as f64).sqrt() as i64;
         assert_eq!(n2, n * n, "DFT input is not a square array");
-        self.zero_padded_buffer = vec![Complex::zero(); self.zero_padded_buffer.len()];
-        for i in 0..n {
-            let ii = (i - n / 2).rem_euclid(self.len);
-            for j in 0..n {
-                let jj = (j - n / 2).rem_euclid(self.len);
-                let k = (i * n + j) as usize;
-                let kk = (ii * self.len + jj) as usize;
-                self.zero_padded_buffer[kk].re = buffer[k].re;
-                self.zero_padded_buffer[kk].im = buffer[k].im;
+        if n == self.len {
+            self.zero_padded_buffer = mem::take(&mut buffer);
+        } else {
+            for i in 0..n {
+                let ii = (i - n / 2).rem_euclid(self.len);
+                for j in 0..n {
+                    let jj = (j - n / 2).rem_euclid(self.len);
+                    let k = (i * n + j) as usize;
+                    let kk = (ii * self.len + jj) as usize;
+                    self.zero_padded_buffer[kk].re = buffer[k].re;
+                    self.zero_padded_buffer[kk].im = buffer[k].im;
+                }
             }
         }
+        self
     }
-    // Shift zero frequency back to center
-    fn shift(&mut self) {
+    /// Shift zero frequency back to center
+    pub fn shift(&mut self) -> &mut Self {
         let mut buffer: Vec<Cpx> = vec![Complex::zero(); self.zero_padded_buffer.len()];
         for i in 0..self.len {
             let ii = (i + self.len / 2) % self.len;
@@ -69,10 +80,17 @@ impl ZpDft {
             }
         }
         self.zero_padded_buffer.copy_from_slice(buffer.as_slice());
+        self
+    }
+    pub fn filter(&mut self, kernel: &[Cpx]) -> &mut Self {
+        self.zero_padded_buffer
+            .iter_mut()
+            .zip(kernel)
+            .for_each(|(b, k)| *b *= k);
+        self
     }
     /// Compute the 2D Fourier transfrom
-    pub fn process(&mut self, buffer: &[Cpx]) -> &mut Self {
-        self.zero_padding(buffer);
+    pub fn process(&mut self) -> &mut Self {
         self.fft.process_with_scratch(
             self.zero_padded_buffer.as_mut_slice(),
             self.scratch.as_mut_slice(),
@@ -91,7 +109,6 @@ impl ZpDft {
             self.zero_padded_buffer.as_mut_slice(),
             self.scratch.as_mut_slice(),
         );
-        self.shift();
         self
     }
     /// FFT buffer real part

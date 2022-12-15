@@ -45,9 +45,11 @@ pub use telescope::{Gmt, Hexagon, Hst, Jwst, Telescope, TelescopeBuilder};
 mod photometry;
 pub use photometry::{PhotometricBands, Photometry};
 mod field;
-pub use field::{Field, FieldBuilder, FieldOfView, PixelScale};
+pub use field::{Field, FieldBuilder, FieldOfView, ObservingMode, PixelScale};
 mod objects;
 pub use objects::{MagnitudeDistribution, Objects, Star, StarDistribution};
+mod seeing;
+pub use seeing::SeeingBuilder;
 
 /// Methods common to all telescopes
 pub trait Observer {
@@ -116,4 +118,30 @@ pub trait Observer {
                 .unwrap_or(Path::new("telescope_pupil.png")),
         )
     }
+}
+
+pub(crate) fn atmosphere_transfer_function(r0: f64, big_l0: f64, d: f64, n_otf: usize) -> Vec<f64> {
+    let mut atmosphere_otf: Vec<f64> = vec![0f64; n_otf * n_otf];
+    for i in 0..n_otf {
+        let q = i as i32 - n_otf as i32 / 2;
+        let x = q as f64 * d;
+        let ii = if q < 0i32 {
+            (q + n_otf as i32) as usize
+        } else {
+            q as usize
+        };
+        for j in 0..n_otf {
+            let q = j as i32 - n_otf as i32 / 2;
+            let y = q as f64 * d;
+            let jj = if q < 0i32 {
+                (q + n_otf as i32) as usize
+            } else {
+                q as usize
+            };
+            let r = x.hypot(y);
+            let kk = ii * n_otf + jj;
+            atmosphere_otf[kk] = optust::phase::transfer_function(r, r0, big_l0);
+        }
+    }
+    atmosphere_otf
 }

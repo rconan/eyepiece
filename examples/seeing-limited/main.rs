@@ -1,6 +1,7 @@
 use std::{env, path::Path};
 
-use eyepiece::{Field, Hst, Observer, PixelScale, Star};
+use eyepiece::{FieldBuilder, Observer, SeeingBuilder, Star, Telescope};
+use skyangle::SkyAngle;
 
 fn main() -> anyhow::Result<()> {
     let mut log = env_logger::Builder::new();
@@ -10,15 +11,11 @@ fn main() -> anyhow::Result<()> {
         .join("examples")
         .join("seeing-limited");
 
-    let hst = Hst::new();
-    hst.show_pupil(None)?;
-    let mut field = Field::new(
-        PixelScale::NyquistAt(2, "V".to_string()),
-        21,
-        "K",
-        Star::default(),
-        hst,
-    );
+    let tel = Telescope::new(8.).build();
+    tel.show_pupil(None)?;
+    let mut field = FieldBuilder::new(SkyAngle::Arcsecond(0.01), 200, "J", Star::default(), tel)
+        .seeing_limited(SeeingBuilder::new(16e-2).zenith_angle(SkyAngle::Degree(30.)))
+        .build();
     println!("{field}");
     field.save(path.join("image.png"), None)?;
     Ok(())

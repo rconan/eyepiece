@@ -1,4 +1,4 @@
-use crate::{FieldOfView, Objects, Observer, Photometry, PixelScale};
+use crate::{FieldOfView, Objects, Observer, Photometry, PixelScale, SeeingBuilder};
 
 use super::Field;
 
@@ -38,6 +38,10 @@ impl<T: Observer> FieldBuilder<T> {
     /// Adds photon noise to the image
     pub fn photon_noise(mut self) -> Self {
         self.field.poisson_noise = true;
+        self
+    }
+    pub fn seeing_limited(mut self, seeing_builder: SeeingBuilder) -> Self {
+        self.field.observing_mode = seeing_builder.wavelength(self.field.photometry).build();
         self
     }
     /// Creates a new field

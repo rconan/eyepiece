@@ -1,5 +1,5 @@
 mod field;
-pub use field::Field;
+pub use field::{Field, ObservingMode};
 mod pixel_scale;
 pub use pixel_scale::PixelScale;
 mod field_of_view;

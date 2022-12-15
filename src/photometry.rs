@@ -8,7 +8,7 @@ use std::{fmt::Display, ops::Deref};
 /// use eyepiece::Photometry;
 /// let photometry: Photometry = "V".into();
 /// ```
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum Photometry {
     V(PhotometryData),
     R(PhotometryData),
@@ -32,7 +32,7 @@ impl Deref for Photometry {
     }
 }
 /// Photometric data
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct PhotometryData {
     pub wavelength: f64,
     zeropoint: f64,
