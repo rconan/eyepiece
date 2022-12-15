@@ -2,7 +2,19 @@ use skyangle::SkyAngle;
 
 use crate::{ObservingMode, Photometry};
 
+#[derive(Clone, Debug, Copy)]
 /// Atmospheric seeing builder
+///
+/// # Example
+/// ```
+/// use eyepiece::SeeingBuilder;
+/// use skyangle::SkyAngle;
+/// 
+/// let seeing = SeeingBuilder::new(16e-2)
+///     .zenith_angle(SkyAngle::Degree(30.))
+///     .outer_scale(30.)
+///     .build();
+/// ```
 pub struct SeeingBuilder {
     fried_parameter: f64,
     outer_scale: f64,

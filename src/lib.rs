@@ -7,6 +7,7 @@
 //! with a pixel scale at half Nyquist (i.e. (λ/2D)/2) in V band
 //! ```
 //! use eyepiece::{Hst, Field, PixelScale, Star};
+//!
 //! let hst = Hst::new();
 //! let mut field = Field::new(
 //!     PixelScale::NyquistFraction(2),
@@ -45,14 +46,16 @@ pub use telescope::{Gmt, Hexagon, Hst, Jwst, Telescope, TelescopeBuilder};
 mod photometry;
 pub use photometry::{PhotometricBands, Photometry};
 mod field;
-pub use field::{Field, FieldBuilder, FieldOfView, ObservingMode, PixelScale};
+pub use field::{
+    Builder, Field, FieldBuilder, FieldOfView, ObservingMode, PixelScale, PolychromaticField,
+};
 mod objects;
 pub use objects::{MagnitudeDistribution, Objects, Star, StarDistribution};
 mod seeing;
 pub use seeing::SeeingBuilder;
 
 /// Methods common to all telescopes
-pub trait Observer {
+pub trait Observer: Clone {
     /// Returns telescope diameter
     fn diameter(&self) -> f64;
     /// Returns pupil resolution

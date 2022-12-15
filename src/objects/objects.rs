@@ -4,7 +4,7 @@ use std::ops::{Deref, DerefMut};
 type SkyCoordinates = (SkyAngle<f64>, SkyAngle<f64>);
 
 /// A star object
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Star {
     pub coordinates: SkyCoordinates,
     pub magnitude: f64,
@@ -39,6 +39,7 @@ impl Star {
     }
 }
 
+#[derive(Debug, Clone)]
 /// A collection of stars
 pub struct Objects(pub(super) Vec<Star>);
 impl Deref for Objects {

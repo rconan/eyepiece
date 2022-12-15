@@ -14,13 +14,14 @@ where
     T: Observer,
 {
     pub(super) pixel_scale: PixelScale,
-    field_of_view: FieldOfView,
+    pub(super) field_of_view: FieldOfView,
     pub(super) photometry: Photometry,
-    objects: Objects,
+    pub(super) objects: Objects,
     pub(super) exposure: f64,
     pub(super) poisson_noise: bool,
     pub observer: T,
     pub(super) observing_mode: ObservingMode,
+    pub(super) flux: Option<f64>,
 }
 impl<T: Observer> Display for Field<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -91,6 +92,7 @@ where
             observer,
             poisson_noise: false,
             observing_mode: ObservingMode::DiffractionLimited,
+            flux: None,
         }
     }
     /// Returns the field pixel resolution in radians
@@ -171,8 +173,9 @@ where
             if !star.inside_box(self.field_of_view() + self.resolution() * 2.) {
                 continue;
             }
-            let n_photon =
-                self.photometry.n_photon(star.magnitude) * self.observer.area() * self.exposure;
+            let n_photon = self.flux.unwrap_or(
+                self.photometry.n_photon(star.magnitude) * self.observer.area() * self.exposure,
+            );
             // star coordinates
             let (x, y) = star.coordinates;
             // integer part
@@ -224,8 +227,9 @@ where
                     .norm_sqr()
             };
             // intensity set to # of photon & Poisson noise
-            let intensity_sum: f64 = intensity.iter().cloned().sum();
-            let inorm = n_photon / intensity_sum;
+            let flux: f64 = intensity.iter().cloned().sum();
+            let inorm = n_photon / flux;
+            log::debug!("Image flux: {n_photon}");
             if self.poisson_noise {
                 intensity.iter_mut().for_each(|i| {
                     let poi = Poisson::new(*i * inorm).unwrap();

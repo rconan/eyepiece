@@ -5,7 +5,7 @@ use num_complex::Complex;
 use crate::Observer;
 
 /// Hexagonal pupil
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Hexagon {
     origin: (f64, f64),
     flat_to_flat: f64,
@@ -48,7 +48,7 @@ impl Observer for Hexagon {
 /// James Webb Telescope
 ///
 /// <img src="https://raw.githubusercontent.com/rconan/eyepiece/main/examples/jwst/telescope_pupil.png" width="20%" alt="JWST pupil">
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Jwst(Vec<Hexagon>);
 impl Deref for Jwst {
     type Target = Vec<Hexagon>;

@@ -1,6 +1,7 @@
 use crate::Observer;
 use geotrans::{Conic, Segment, SegmentTrait, Transform, M1};
 
+#[derive(Debug, Clone)]
 /// Giant Magellan Telescope
 ///
 /// <img src="https://raw.githubusercontent.com/rconan/eyepiece/main/examples/gmt/telescope_pupil.png" width="20%" alt="GMT pupil">

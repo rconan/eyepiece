@@ -1,6 +1,12 @@
 use crate::Observer;
 
 /// Generic circular telescope
+///
+/// # Example
+/// ```
+/// use eyepiece::Telescope;
+/// let tel = Telescope::new(8.).build();
+/// ```
 #[derive(Debug, Clone, Copy)]
 pub struct Telescope {
     /// Primary mirror diameter D (Nyquist sampling criteria: λ/2D)
@@ -24,6 +30,7 @@ pub struct TelescopeBuilder {
 }
 
 impl Telescope {
+    /// Creates a new telescope with the given `diameter`
     pub fn new(diameter: f64) -> TelescopeBuilder {
         TelescopeBuilder {
             diameter,
