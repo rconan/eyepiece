@@ -6,11 +6,6 @@ use eyepiece::{
 use skyangle::SkyAngle;
 
 fn main() -> anyhow::Result<()> {
-    let mut log = env_logger::Builder::new();
-    // log.filter_level(log::LevelFilter::Debug).init();
-    log.filter(Some("eyepiece::field"), log::LevelFilter::Debug)
-        .init();
-
     let path = Path::new(&env::var("CARGO_MANIFEST_DIR")?)
         .join("examples")
         .join("seeing-limited");
@@ -21,10 +16,13 @@ fn main() -> anyhow::Result<()> {
         .pixel_scale(SkyAngle::Arcsecond(0.01))
         .field_of_view(200)
         .polychromatic(PhotometricBands::default().into_iter().collect())
-        .seeing_limited(SeeingBuilder::new(16e-2).zenith_angle(SkyAngle::Degree(30.)))
+        .seeing_limited(
+            SeeingBuilder::new(16e-2)
+                .zenith_angle(SkyAngle::Degree(30.))
+                .glao(0.2),
+        )
         .flux(1f64)
         .build();
-    // println!("{field}");
-    field.save(path.join("seeing-limited_VRIKHK.png"), None)?;
+    field.save(path.join("seeing-limited_VRIJHK.png"), None)?;
     Ok(())
 }
