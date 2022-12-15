@@ -5,16 +5,8 @@ use rand_distr::{Distribution, Poisson};
 use skyangle::Conversion;
 use std::{fmt::Display, path::Path};
 
-use super::{FieldOfView, PixelScale};
+use super::{FieldOfView, ObservingMode, PixelScale};
 use crate::{atmosphere_transfer_function, Objects, Observer, Photometry, ZpDft};
-
-pub enum ObservingMode {
-    DiffractionLimited,
-    SeeingLimited {
-        fried_parameter: f64,
-        outer_scale: f64,
-    },
-}
 
 /// Observer field of regard
 pub struct Field<T>
