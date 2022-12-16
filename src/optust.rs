@@ -57,6 +57,14 @@ pub fn gamma(x: f64) -> f64 {
 pub mod phase {
     use super::*;
 
+    pub fn spectrum(f: f64, r0: f64, big_l0: f64) -> f64 {
+        let g_11o6_2: f64 = gamma(11. / 6.).powi(2);
+        let g_6o5: f64 = gamma(6. / 5.);
+        let p56: f64 = (24. * g_6o5 / 5.).powf(5. / 6.);
+        let pi113: f64 = PI.powf(11. / 3.);
+        let f02 = big_l0.recip().powi(2);
+        (0.5 * g_11o6_2 * p56 / pi113) * r0.powf(-5. / 3.) * (f * f + f02).powf(-11. / 6.)
+    }
     pub fn variance(r0: f64, big_l0: f64) -> f64 {
         let g_11o6: f64 = gamma(11. / 6.);
         let g_5o6: f64 = gamma(5. / 6.);
@@ -114,5 +122,11 @@ mod tests {
     #[test]
     fn covariance() {
         println!("covariance: {}", phase::covariance(100., 0.15, 25.));
+    }
+
+    #[test]
+    fn spectrum() {
+        println!("covariance: {}", phase::spectrum(0., 0.15, 25.));
+        println!("covariance: {}", phase::spectrum(1., 0.15, 25.));
     }
 }
