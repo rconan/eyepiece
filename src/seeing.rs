@@ -49,7 +49,7 @@ impl SeeingBuilder {
             "GLAO fraction of correction should be less that 1"
         );
         Self {
-            fried_parameter: self.fried_parameter * (1. - corrected_fraction).powf(-3_f64 / 5_f64),
+            fried_parameter: self.fried_parameter / (1. - corrected_fraction),
             ..self
         }
     }
