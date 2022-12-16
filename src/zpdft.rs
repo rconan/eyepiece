@@ -173,12 +173,12 @@ mod tests {
         let n_fft = 16;
         let mut zp_dft = ZpDft::forward(n_fft);
         let buffer: Vec<Cpx> = vec![Complex::new(1f64, 0f64); n * n];
-        zp_dft.zero_padding(buffer.as_slice());
+        zp_dft.zero_padding(buffer);
         println!("REAL");
         zp_dft.real().chunks(n_fft).for_each(|c| println!("{c:?}"));
         println!("IMAG");
         zp_dft.imag().chunks(n_fft).for_each(|c| println!("{c:?}"));
-        zp_dft.process(buffer.as_slice());
+        zp_dft.process();
         println!("REAL");
         zp_dft
             .real()
@@ -202,12 +202,12 @@ mod tests {
         let n_fft = 16;
         let mut zp_dft = ZpDft::forward(n_fft);
         let buffer: Vec<Cpx> = vec![Complex::new(1f64, 0f64); n * n];
-        zp_dft.zero_padding(buffer.as_slice());
+        zp_dft.zero_padding(buffer);
         println!("REAL");
         zp_dft.real().chunks(n_fft).for_each(|c| println!("{c:?}"));
         println!("IMAG");
         zp_dft.imag().chunks(n_fft).for_each(|c| println!("{c:?}"));
-        zp_dft.process(buffer.as_slice());
+        zp_dft.process();
         println!("REAL");
         zp_dft
             .real()
@@ -234,12 +234,12 @@ mod tests {
         let n_fft = 12;
         let mut zp_dft = ZpDft::forward(n_fft);
         let buffer: Vec<Cpx> = vec![Complex::new(1f64, 0f64); n * n];
-        zp_dft.zero_padding(buffer.as_slice());
+        zp_dft.zero_padding(buffer);
         println!("REAL");
         zp_dft.real().chunks(n_fft).for_each(|c| println!("{c:?}"));
         println!("IMAG");
         zp_dft.imag().chunks(n_fft).for_each(|c| println!("{c:?}"));
-        zp_dft.process(buffer.as_slice());
+        zp_dft.process();
         println!("REAL");
         zp_dft
             .real()
