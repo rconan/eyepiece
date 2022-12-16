@@ -5,7 +5,7 @@ use rand_distr::{Distribution, Poisson};
 use skyangle::Conversion;
 use std::{fmt::Display, path::Path};
 
-use super::{FieldOfView, ObservingMode, PixelScale};
+use super::{Builder, FieldBuilder, FieldOfView, ObservingMode, PixelScale};
 use crate::{atmosphere_transfer_function, Objects, Observer, Photometry, ZpDft};
 
 /// Observer field of regard
@@ -63,6 +63,36 @@ impl<T: Observer> Display for Field<T> {
             " . star magnitudes: [{magnitude_min:.1},{magnitude_max:.1}]"
         )?;
         writeln!(f, " . exposure time: {}s", self.exposure)
+    }
+}
+impl<T: Observer> Builder<Field<T>> for FieldBuilder<T> {
+    /// Creates a new field
+    fn build(self) -> Field<T> {
+        let FieldBuilder {
+            pixel_scale,
+            field_of_view,
+            photometry,
+            objects,
+            exposure,
+            poisson_noise,
+            observer,
+            seeing,
+            flux,
+        } = self;
+        Field {
+            pixel_scale,
+            field_of_view,
+            photometry: photometry[0],
+            objects,
+            exposure,
+            poisson_noise,
+            observer,
+            observing_mode: seeing.map_or_else(
+                || ObservingMode::DiffractionLimited,
+                |seeing| seeing.wavelength(photometry[0]).build(),
+            ),
+            flux,
+        }
     }
 }
 impl<T> Field<T>

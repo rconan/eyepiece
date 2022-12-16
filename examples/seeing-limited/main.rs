@@ -16,11 +16,7 @@ fn main() -> anyhow::Result<()> {
         .pixel_scale(SkyAngle::Arcsecond(0.01))
         .field_of_view(200)
         .polychromatic(PhotometricBands::default().into_iter().collect())
-        .seeing_limited(
-            SeeingBuilder::new(16e-2)
-                .zenith_angle(SkyAngle::Degree(30.))
-                .glao(0.2),
-        )
+        .seeing_limited(SeeingBuilder::new(16e-2).zenith_angle(SkyAngle::Degree(30.)))
         .flux(1f64)
         .build();
     field.save(path.join("seeing-limited_VRIJHK.png"), None)?;

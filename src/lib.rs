@@ -48,6 +48,7 @@ pub use photometry::{PhotometricBands, Photometry};
 mod field;
 pub use field::{
     Builder, Field, FieldBuilder, FieldOfView, ObservingMode, PixelScale, PolychromaticField,
+    SeeingLimitedFields,
 };
 mod objects;
 pub use objects::{MagnitudeDistribution, Objects, Star, StarDistribution};
