@@ -56,7 +56,7 @@ pub fn gamma(x: f64) -> f64 {
 
 pub mod phase {
     use super::*;
-
+    #[allow(dead_code)]
     pub fn spectrum(f: f64, r0: f64, big_l0: f64) -> f64 {
         let g_11o6_2: f64 = gamma(11. / 6.).powi(2);
         let g_6o5: f64 = gamma(6. / 5.);

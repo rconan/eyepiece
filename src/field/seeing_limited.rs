@@ -6,11 +6,40 @@ use indicatif::ProgressBar;
 use super::{Builder, Field, FieldBuilder, Observing, SeeingLimited};
 use crate::{Observer, SeeingBuilder};
 
+/**
+Seeing limited fields container
+
+A set of seeing limited fields with the same setup but for the seeing conditions.
+## Example
+```
+use eyepiece::{Builder, FieldBuilder, SeeingBuilder, SeeingLimitedFields, Telescope};
+use skyangle::SkyAngle;
+
+let tel = Telescope::new(8.).build();
+
+let seeing: Vec<_> = (1..=5)
+    .map(|i| {
+        SeeingBuilder::new(16e-2)
+            .outer_scale(5f64 * i as f64)
+            .zenith_angle(SkyAngle::Degree(30.))
+    })
+    .collect();
+let mut field: SeeingLimitedFields<Telescope> = (
+    FieldBuilder::new(tel)
+        .pixel_scale(SkyAngle::Arcsecond(0.01))
+        .field_of_view(200),
+    seeing,
+)
+    .build();
+field.save("seeing_vs_outer-scale.png", None).unwrap();
+```
+*/
 pub struct SeeingLimitedFields<T: Observer> {
     field_builder: FieldBuilder<T>,
     seeing_builders: Vec<SeeingBuilder>,
 }
 impl<T: Observer> Builder<SeeingLimitedFields<T>> for (FieldBuilder<T>, Vec<SeeingBuilder>) {
+    /// Creates a set of seeing limited fields from a [FieldBuilder] and a [Vec] of [SeeingBuilder]
     fn build(self) -> SeeingLimitedFields<T> {
         SeeingLimitedFields {
             field_builder: self.0,
@@ -20,7 +49,7 @@ impl<T: Observer> Builder<SeeingLimitedFields<T>> for (FieldBuilder<T>, Vec<Seei
 }
 
 impl<T: Observer> SeeingLimitedFields<T> {
-    /// Return the # of monochromatic filters
+    /// Return the # of seeing conditions
     pub fn len(&self) -> usize {
         self.seeing_builders.len()
     }

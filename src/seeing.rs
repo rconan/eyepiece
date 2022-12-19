@@ -12,8 +12,7 @@ use crate::Photometry;
 ///
 /// let seeing = SeeingBuilder::new(16e-2)
 ///     .zenith_angle(SkyAngle::Degree(30.))
-///     .outer_scale(30.)
-///     .build();
+///     .outer_scale(30.);
 /// ```
 pub struct SeeingBuilder {
     pub fried_parameter: f64,
@@ -21,6 +20,8 @@ pub struct SeeingBuilder {
 }
 impl SeeingBuilder {
     /// Creates a new atmospheric seeing builder by setting the Fried parameter in meters
+    ///
+    /// The outer scale is set to 25m.
     pub fn new(fried_parameter: f64) -> Self {
         Self {
             fried_parameter,

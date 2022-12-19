@@ -6,28 +6,22 @@
 //! A single star in the center of a 21x21 pixels field as seen by the Hubble Space Telescope
 //! with a pixel scale at half Nyquist (i.e. (λ/2D)/2) in V band
 //! ```
-//! use eyepiece::{Hst, Field, PixelScale, Star};
+//! use eyepiece::{Builder, Hst, Field, FieldBuilder, PixelScale, Star};
 //!
 //! let hst = Hst::new();
-//! let mut field = Field::new(
-//!     PixelScale::NyquistFraction(2),
-//!     21,
-//!     "V",
-//!     Star::default(),
-//!     hst,
-//! );
+//! let mut field: Field<Hst> = FieldBuilder::new(hst)
+//!     .pixel_scale(PixelScale::NyquistFraction(2))
+//!     .field_of_view(21)
+//!     .build();
 //! ```
 //! The field intensity map is computed and saved with
 //! ```no_run
-//! # use eyepiece::{Hst, Field, PixelScale, Star};
+//! # use eyepiece::{Builder, Hst, Field, FieldBuilder, PixelScale, Star};
 //! # let hst = Hst::new();
-//! # let mut field = Field::new(
-//! #    PixelScale::Nyquist(2),
-//! #    21,
-//! #    "V",
-//! #    Star::default(),
-//! #    hst,
-//! # );
+//! # let mut field: Field<Hst> = FieldBuilder::new(hst)
+//! #    .pixel_scale(PixelScale::NyquistFraction(2))
+//! #    .field_of_view(21)
+//! #    .build();
 //! field.save("field.png", None).unwrap();
 //! ```
 //!
@@ -53,8 +47,6 @@ mod objects;
 pub use objects::{MagnitudeDistribution, Objects, Star, StarDistribution};
 mod seeing;
 pub use seeing::SeeingBuilder;
-mod adaptive_optics;
-pub use adaptive_optics::AdaptiveOptics;
 mod bessel_knu;
 mod optust;
 
