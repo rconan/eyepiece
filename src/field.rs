@@ -23,3 +23,5 @@ pub trait Builder<F> {
 pub enum DiffractionLimited {}
 /// Seeing limited observing mode
 pub enum SeeingLimited {}
+/// Adaptive optics observing mode
+pub enum AdaptiveOptics {}

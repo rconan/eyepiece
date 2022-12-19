@@ -5,8 +5,8 @@ use skyangle::Conversion;
 use std::{fmt::Display, path::Path};
 
 use super::{
-    Builder, DiffractionLimited, FieldBuilder, FieldOfView, Intensity, Observing, PixelScale,
-    SeeingLimited,
+    AdaptiveOptics, Builder, DiffractionLimited, FieldBuilder, FieldOfView, Intensity, Observing,
+    PixelScale, SeeingLimited,
 };
 use crate::{Objects, Observer, Photometry};
 
@@ -121,7 +121,33 @@ impl<T: Observer> Builder<Field<T, SeeingLimited>> for FieldBuilder<T> {
         }
     }
 }
-
+impl<T: Observer> Builder<Field<T, AdaptiveOptics>> for FieldBuilder<T> {
+    /// Creates a new field
+    fn build(self) -> Field<T, AdaptiveOptics> {
+        let FieldBuilder {
+            pixel_scale,
+            field_of_view,
+            photometry,
+            objects,
+            exposure,
+            poisson_noise,
+            observer,
+            seeing,
+            flux,
+        } = self;
+        Field {
+            pixel_scale,
+            field_of_view,
+            photometry: photometry[0],
+            objects,
+            exposure,
+            poisson_noise,
+            observer,
+            observing_mode: Observing::adaptive_optics(seeing),
+            flux,
+        }
+    }
+}
 impl<T, Mode> Field<T, Mode>
 where
     T: Observer,

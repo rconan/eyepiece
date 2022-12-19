@@ -25,6 +25,9 @@ impl ZpDft {
             len: len as i64,
         }
     }
+    pub fn len(&self) -> usize {
+        self.len as usize
+    }
     pub fn reset(&mut self) -> &mut Self {
         self.zero_padded_buffer = vec![Complex::zero(); (self.len * self.len) as usize];
         self
