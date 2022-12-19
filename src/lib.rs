@@ -47,13 +47,14 @@ mod photometry;
 pub use photometry::{PhotometricBands, Photometry};
 mod field;
 pub use field::{
-    Builder, Field, FieldBuilder, FieldOfView, ObservingMode, PixelScale, PolychromaticField,
-    SeeingLimitedFields,
+    Builder, Field, FieldBuilder, FieldOfView, PixelScale, PolychromaticField, SeeingLimitedFields,
 };
 mod objects;
 pub use objects::{MagnitudeDistribution, Objects, Star, StarDistribution};
 mod seeing;
 pub use seeing::SeeingBuilder;
+mod adaptive_optics;
+pub use adaptive_optics::AdaptiveOptics;
 mod bessel_knu;
 mod optust;
 

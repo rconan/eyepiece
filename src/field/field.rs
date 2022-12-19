@@ -1,15 +1,17 @@
 use image::{ImageResult, Rgb, RgbImage};
 use indicatif::ProgressBar;
-use num_complex::Complex;
 use rand_distr::{Distribution, Poisson};
 use skyangle::Conversion;
 use std::{fmt::Display, path::Path};
 
-use super::{Builder, FieldBuilder, FieldOfView, ObservingMode, PixelScale};
-use crate::{atmosphere_transfer_function, Objects, Observer, Photometry, ZpDft};
+use super::{
+    Builder, DiffractionLimited, FieldBuilder, FieldOfView, Intensity, Observing, PixelScale,
+    SeeingLimited,
+};
+use crate::{Objects, Observer, Photometry};
 
 /// Observer field of regard
-pub struct Field<T>
+pub struct Field<T, Mode = DiffractionLimited>
 where
     T: Observer,
 {
@@ -20,7 +22,7 @@ where
     pub(super) exposure: f64,
     pub(super) poisson_noise: bool,
     pub observer: T,
-    pub(super) observing_mode: ObservingMode,
+    pub(super) observing_mode: Observing<Mode>,
     pub(super) flux: Option<f64>,
 }
 impl<T: Observer> Display for Field<T> {
@@ -33,9 +35,9 @@ impl<T: Observer> Display for Field<T> {
             self.field_of_view.get(self).to_arcsec()
         )?;
         writeln!(f, " . pupil area: {:.3}m^2", self.observer.area())?;
-        if let Some(seeing) = self.seeing() {
-            writeln!(f, " . seeing: {:.3}arcsec", seeing.to_arcsec())?;
-        }
+        // if let Some(seeing) = self.seeing() {
+        //     writeln!(f, " . seeing: {:.3}arcsec", seeing.to_arcsec())?;
+        // }
         let n_star: usize = self
             .objects
             .iter()
@@ -65,9 +67,36 @@ impl<T: Observer> Display for Field<T> {
         writeln!(f, " . exposure time: {}s", self.exposure)
     }
 }
-impl<T: Observer> Builder<Field<T>> for FieldBuilder<T> {
+impl<T: Observer> Builder<Field<T, DiffractionLimited>> for FieldBuilder<T> {
     /// Creates a new field
-    fn build(self) -> Field<T> {
+    fn build(self) -> Field<T, DiffractionLimited> {
+        let FieldBuilder {
+            pixel_scale,
+            field_of_view,
+            photometry,
+            objects,
+            exposure,
+            poisson_noise,
+            observer,
+            seeing: _,
+            flux,
+        } = self;
+        Field {
+            pixel_scale,
+            field_of_view,
+            photometry: photometry[0],
+            objects,
+            exposure,
+            poisson_noise,
+            observer,
+            observing_mode: Observing::diffraction_limited(),
+            flux,
+        }
+    }
+}
+impl<T: Observer> Builder<Field<T, SeeingLimited>> for FieldBuilder<T> {
+    /// Creates a new field
+    fn build(self) -> Field<T, SeeingLimited> {
         let FieldBuilder {
             pixel_scale,
             field_of_view,
@@ -87,44 +116,16 @@ impl<T: Observer> Builder<Field<T>> for FieldBuilder<T> {
             exposure,
             poisson_noise,
             observer,
-            observing_mode: seeing.map_or_else(
-                || ObservingMode::DiffractionLimited,
-                |seeing| seeing.wavelength(photometry[0]).build(),
-            ),
+            observing_mode: Observing::seeing_limited(seeing),
             flux,
         }
     }
 }
-impl<T> Field<T>
+
+impl<T, Mode> Field<T, Mode>
 where
     T: Observer,
 {
-    /// Creates a new field
-    pub fn new<X, F, P, O>(
-        resolution: X,
-        field_of_view: F,
-        photometric_band: P,
-        objects: O,
-        observer: T,
-    ) -> Self
-    where
-        X: Into<PixelScale>,
-        F: Into<FieldOfView>,
-        P: Into<Photometry>,
-        O: Into<Objects>,
-    {
-        Self {
-            pixel_scale: resolution.into(),
-            field_of_view: field_of_view.into(),
-            photometry: photometric_band.into(),
-            objects: objects.into(),
-            exposure: 1f64,
-            observer,
-            poisson_noise: false,
-            observing_mode: ObservingMode::DiffractionLimited,
-            flux: None,
-        }
-    }
     /// Returns the field pixel resolution in radians
     pub fn resolution(&self) -> f64 {
         self.pixel_scale.get(&self.observer, &self.photometry)
@@ -133,19 +134,14 @@ where
     pub fn field_of_view(&self) -> f64 {
         self.field_of_view.get(self)
     }
-    /// Returns the atmospheric seeing in radians
-    pub fn seeing(&self) -> Option<f64> {
-        if let ObservingMode::SeeingLimited {
-            fried_parameter, ..
-        } = self.observing_mode
-        {
-            Some(0.9759 * self.photometry.wavelength / fried_parameter)
-        } else {
-            None
-        }
-    }
+}
+impl<T, Mode> Field<T, Mode>
+where
+    T: Observer,
+    Observing<Mode>: Intensity,
+{
     /// Computes field-of-view intensity map
-    pub fn intensity(&self, bar: Option<ProgressBar>) -> Vec<f64> {
+    pub fn intensity(&mut self, bar: Option<ProgressBar>) -> Vec<f64> {
         // Telescope Nyquist-Shannon sampling criteria
         // let nyquist = 0.5 * self.photometry.wavelength / self.observer.diameter();
         // Image resolution to sampling criteria ratio
@@ -170,27 +166,8 @@ where
          "
         );
         // Zero-padding discrete Fourier transform
-        let (mut zp_dft, mut seeing_data) = match self.observing_mode {
-            ObservingMode::DiffractionLimited => (ZpDft::forward(n_dft), None),
-            ObservingMode::SeeingLimited {
-                fried_parameter,
-                outer_scale,
-            } => (
-                ZpDft::forward(n_dft),
-                Some((
-                    ZpDft::inverse(n_dft),
-                    atmosphere_transfer_function(
-                        fried_parameter,
-                        outer_scale,
-                        self.observer.resolution(),
-                        n_dft,
-                    )
-                    .into_iter()
-                    .map(|x| Complex::new(x, 0f64))
-                    .collect::<Vec<Complex<f64>>>(),
-                )),
-            ),
-        };
+        self.observing_mode
+            .init_fft(n_dft, self.observer.resolution());
 
         // star image stacking buffer
         let mut buffer = vec![0f64; intensity_sampling.pow(2)];
@@ -227,35 +204,10 @@ where
                 ))
             };
             // star intensity map
-            let mut intensity = if let Some((zp_idft, atm_otf)) = &mut seeing_data {
-                zp_idft
-                    .zero_padding(
-                        zp_dft
-                            .reset()
-                            .zero_padding(self.observer.pupil(shift))
-                            .process()
-                            .norm_sqr()
-                            .into_iter()
-                            .map(|x| Complex::new(x, 0f64))
-                            .collect::<Vec<Complex<f64>>>(),
-                    )
-                    .process()
-                    .filter(atm_otf.as_slice());
-                zp_dft
-                    .zero_padding(zp_idft.buffer())
-                    .process()
-                    .shift()
-                    .resize(intensity_sampling)
-                    .norm()
-            } else {
-                zp_dft
-                    .reset()
-                    .zero_padding(self.observer.pupil(shift))
-                    .process()
-                    .shift()
-                    .resize(intensity_sampling)
-                    .norm_sqr()
-            };
+            let mut intensity = self
+                .observing_mode
+                .intensity(self.observer.pupil(shift), intensity_sampling)
+                .unwrap();
             // intensity set to # of photon & Poisson noise
             let flux: f64 = intensity.iter().cloned().sum();
             let inorm = n_photon / flux;

@@ -5,7 +5,7 @@ use indicatif::ProgressBar;
 
 use crate::Observer;
 
-use super::{Builder, Field, FieldBuilder, ObservingMode};
+use super::{Builder, DiffractionLimited, Field, FieldBuilder, Observing, SeeingLimited};
 
 /// Polychromatic field container
 ///
@@ -17,7 +17,10 @@ impl<T: Observer> Builder<PolychromaticField<T>> for FieldBuilder<T> {
         PolychromaticField(self)
     }
 }
-impl<T: Observer> PolychromaticField<T> {
+impl<T> PolychromaticField<T>
+where
+    T: Observer,
+{
     /// Return the # of monochromatic filters
     pub fn len(&self) -> usize {
         self.0.photometry.len()
@@ -37,21 +40,35 @@ impl<T: Observer> PolychromaticField<T> {
                 seeing,
                 flux,
             } = self.0.clone();
-            let field = Field {
-                pixel_scale,
-                field_of_view,
-                photometry: field_photometry,
-                objects,
-                exposure,
-                poisson_noise,
-                observer,
-                observing_mode: seeing.map_or_else(
-                    || ObservingMode::DiffractionLimited,
-                    |seeing| seeing.wavelength(field_photometry).build(),
-                ),
-                flux,
-            };
-            intensities.push(field.intensity(None));
+            intensities.push(if seeing.is_none() {
+                let mut field: Field<T, DiffractionLimited> = Field {
+                    pixel_scale,
+                    field_of_view,
+                    photometry: field_photometry,
+                    objects,
+                    exposure,
+                    poisson_noise,
+                    observer,
+                    observing_mode: Observing::diffraction_limited(),
+                    flux,
+                };
+                field.intensity(None)
+            } else {
+                let mut field: Field<T, SeeingLimited> = Field {
+                    pixel_scale,
+                    field_of_view,
+                    photometry: field_photometry,
+                    objects,
+                    exposure,
+                    poisson_noise,
+                    observer,
+                    observing_mode: Observing::seeing_limited(
+                        seeing.map(|seeing| seeing.wavelength(field_photometry)),
+                    ),
+                    flux,
+                };
+                field.intensity(None)
+            });
         }
         let max_intensity = intensities
             .iter()

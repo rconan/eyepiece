@@ -1,6 +1,6 @@
 use std::{env, path::Path};
 
-use eyepiece::{Field, Hst, Observer, PixelScale, Star};
+use eyepiece::{Builder, Field, FieldBuilder, Hst, Observer, PixelScale};
 
 fn main() -> anyhow::Result<()> {
     let mut log = env_logger::Builder::new();
@@ -12,13 +12,11 @@ fn main() -> anyhow::Result<()> {
 
     let hst = Hst::new();
     hst.show_pupil(None)?;
-    let mut field = Field::new(
-        PixelScale::NyquistAt(2, "V".to_string()),
-        21,
-        "K",
-        Star::default(),
-        hst,
-    );
+    let mut field: Field<Hst> = FieldBuilder::new(hst)
+        .pixel_scale(PixelScale::NyquistAt(2, "V".to_string()))
+        .field_of_view(21)
+        .photometry("K")
+        .build();
     println!("{field}");
     field.save(path.join("image.png"), None)?;
     Ok(())

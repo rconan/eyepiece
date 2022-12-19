@@ -3,7 +3,7 @@ use std::path::Path;
 use image::{ImageResult, Rgb, RgbImage};
 use indicatif::ProgressBar;
 
-use super::{Builder, Field, FieldBuilder};
+use super::{Builder, Field, FieldBuilder, Observing, SeeingLimited};
 use crate::{Observer, SeeingBuilder};
 
 pub struct SeeingLimitedFields<T: Observer> {
@@ -39,7 +39,7 @@ impl<T: Observer> SeeingLimitedFields<T> {
                 seeing: _,
                 flux,
             } = self.field_builder.clone();
-            let field = Field {
+            let mut field: Field<T, SeeingLimited> = Field {
                 pixel_scale,
                 field_of_view,
                 photometry: photometry[0],
@@ -47,7 +47,9 @@ impl<T: Observer> SeeingLimitedFields<T> {
                 exposure,
                 poisson_noise,
                 observer,
-                observing_mode: seeing_builder.wavelength(photometry[0]).build(),
+                observing_mode: Observing::seeing_limited(Some(
+                    seeing_builder.wavelength(photometry[0]),
+                )),
                 flux,
             };
             intensities.push(field.intensity(None));

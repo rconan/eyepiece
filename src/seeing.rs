@@ -1,6 +1,6 @@
 use skyangle::SkyAngle;
 
-use crate::{ObservingMode, Photometry};
+use crate::Photometry;
 
 #[derive(Clone, Debug, Copy)]
 /// Atmospheric seeing builder
@@ -16,8 +16,8 @@ use crate::{ObservingMode, Photometry};
 ///     .build();
 /// ```
 pub struct SeeingBuilder {
-    fried_parameter: f64,
-    outer_scale: f64,
+    pub fried_parameter: f64,
+    pub outer_scale: f64,
 }
 impl SeeingBuilder {
     /// Creates a new atmospheric seeing builder by setting the Fried parameter in meters
@@ -60,21 +60,6 @@ impl SeeingBuilder {
             fried_parameter: self.fried_parameter
                 * (photometry.wavelength / 0.5e-6_f64).powf(1.2_f64),
             ..self
-        }
-    }
-    /// Creates a seeing limited [ObservingMode]
-    pub fn build(self) -> ObservingMode {
-        log::debug!(
-            r"
- . Fried parameter: {:.3}m
- . outer scale: {:.3}m 
-        ",
-            self.fried_parameter,
-            self.outer_scale
-        );
-        ObservingMode::SeeingLimited {
-            fried_parameter: self.fried_parameter,
-            outer_scale: self.outer_scale,
         }
     }
 }

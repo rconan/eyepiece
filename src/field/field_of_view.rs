@@ -24,7 +24,7 @@ impl From<usize> for FieldOfView {
     }
 }
 impl FieldOfView {
-    pub(super) fn get<T: Observer>(&self, field: &Field<T>) -> f64 {
+    pub(super) fn get<T: Observer, M>(&self, field: &Field<T, M>) -> f64 {
         match self {
             FieldOfView::PixelScale(n) => field.resolution() * *n as f64,
             FieldOfView::PixelScaleAt(n, band) => {
@@ -34,7 +34,7 @@ impl FieldOfView {
             FieldOfView::SkyAngle(val) => val.to_radians(),
         }
     }
-    pub(super) fn to_pixelscale_ratio<T: Observer>(&self, field: &Field<T>) -> f64 {
+    pub(super) fn to_pixelscale_ratio<T: Observer, M>(&self, field: &Field<T, M>) -> f64 {
         match self {
             FieldOfView::PixelScale(n) => *n as f64,
             FieldOfView::PixelScaleAt(..) => self.get(field) / field.resolution(),

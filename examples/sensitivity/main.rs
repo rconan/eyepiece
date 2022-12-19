@@ -13,13 +13,12 @@ fn main() -> anyhow::Result<()> {
     let n_star = 1000;
     let gmt_res = PixelScale::Nyquist(1);
     let gmt_fov = 1000;
-    let field = Field::new(
-        gmt_res.clone(),
-        gmt_fov,
-        field_band,
-        Star::default(),
-        Gmt::new(),
-    );
+    let field: Field<Gmt> = FieldBuilder::new(Gmt::new())
+        .pixel_scale(gmt_res.clone())
+        .field_of_view(gmt_fov)
+        .photometry(field_band)
+        .objects(Star::default())
+        .build();
     println!("{field}");
     let alpha = SkyAngle::Radian(field.resolution());
     let fov = SkyAngle::Radian(field.field_of_view());

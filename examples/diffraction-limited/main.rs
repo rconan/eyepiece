@@ -1,4 +1,4 @@
-use eyepiece::{Field, Gmt, Hst, Jwst, StarDistribution};
+use eyepiece::{Builder, Field, FieldBuilder, Gmt, Hst, Jwst, StarDistribution};
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 use skyangle::SkyAngle;
 use std::{env, thread};
@@ -18,7 +18,12 @@ fn main() -> anyhow::Result<()> {
         n_sample: n_star,
     };
 
-    let field = Field::new(alpha, fov, field_band, &stars, Hst::new());
+    let field: Field<Hst> = FieldBuilder::new(Hst::new())
+        .pixel_scale(alpha)
+        .field_of_view(fov)
+        .photometry(field_band)
+        .objects(&stars)
+        .build();
     println!("{field}");
 
     let mbars = MultiProgress::new();
@@ -32,19 +37,34 @@ fn main() -> anyhow::Result<()> {
 
     thread::scope(|s| {
         s.spawn(|| {
-            let mut field = Field::new(alpha, fov, field_band, &stars, Hst::new());
+            let mut field: Field<Hst> = FieldBuilder::new(Hst::new())
+                .pixel_scale(alpha)
+                .field_of_view(fov)
+                .photometry(field_band)
+                .objects(&stars)
+                .build();
             field
                 .save(format!("hst_field{field_band}.png"), Some(hst_bar))
                 .unwrap();
         });
         s.spawn(|| {
-            let mut field = Field::new(alpha, fov, field_band, &stars, Jwst::new());
+            let mut field: Field<Jwst> = FieldBuilder::new(Jwst::new())
+                .pixel_scale(alpha)
+                .field_of_view(fov)
+                .photometry(field_band)
+                .objects(&stars)
+                .build();
             field
                 .save(format!("jwst_field{field_band}.png"), Some(jwst_bar))
                 .unwrap();
         });
         s.spawn(|| {
-            let mut field = Field::new(alpha, fov, field_band, &stars, Gmt::new());
+            let mut field: Field<Gmt> = FieldBuilder::new(Gmt::new())
+                .pixel_scale(alpha)
+                .field_of_view(fov)
+                .photometry(field_band)
+                .objects(&stars)
+                .build();
             field
                 .save(format!("gmt_field{field_band}.png"), Some(gmt_bar))
                 .unwrap();
