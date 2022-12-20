@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use image::{ImageResult, Rgb, RgbImage};
-use indicatif::ProgressBar;
+use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 
 use super::{Builder, Field, FieldBuilder, Observing, SeeingLimited};
 use crate::{AdaptiveOptics, Observer, SeeingBuilder};
@@ -48,7 +48,7 @@ impl<T: Observer> Builder<SeeingLimitedField<T>> for (FieldBuilder<T>, Vec<Seein
     }
 }
 impl<T: Observer> Builder<SeeingLimitedField<T>> for (FieldBuilder<T>, SeeingBuilder) {
-    /// Creates a set of seeing limited fields from a [FieldBuilder] and a [Vec] of [SeeingBuilder]
+    /// Creates a set of seeing limited fields from a [FieldBuilder] and a [SeeingBuilder]
     fn build(self) -> SeeingLimitedField<T> {
         <(FieldBuilder<T>, Vec<SeeingBuilder>) as Builder<SeeingLimitedField<T>>>::build((
             self.0,
@@ -62,7 +62,11 @@ impl<T: Observer> SeeingLimitedField<T> {
         self.seeing_builders.len()
     }
     /// Computes image and save it to file
-    pub fn save<P: AsRef<Path>>(&mut self, path: P, _bar: Option<ProgressBar>) -> ImageResult<()> {
+    pub fn save<P: AsRef<Path>>(
+        &mut self,
+        path: P,
+        mbar: Option<MultiProgress>,
+    ) -> ImageResult<()> {
         let mut intensities = vec![];
         for seeing_builder in self.seeing_builders.iter() {
             let FieldBuilder {
@@ -77,6 +81,18 @@ impl<T: Observer> SeeingLimitedField<T> {
                 flux,
                 lufn,
             } = self.field_builder.clone();
+            let bar = mbar
+                .as_ref()
+                .map(|mbar| mbar.add(ProgressBar::new(objects.len() as u64)));
+            bar.as_ref().map(|bar| {
+                bar.set_style(
+                    ProgressStyle::with_template(&format!(
+                        "{}",
+                        "[{eta:>4}] {bar:40.cyan/blue} {pos:>5}/{len:5}"
+                    ))
+                    .unwrap(),
+                )
+            });
             let mut intensity = if seeing_builder.adaptive_optics.is_none() {
                 let mut field: Field<T, SeeingLimited> = Field {
                     pixel_scale,
@@ -92,7 +108,7 @@ impl<T: Observer> SeeingLimitedField<T> {
                     flux,
                     lufn,
                 };
-                field.intensity(None)
+                field.intensity(bar)
             } else {
                 let mut field: Field<T, AdaptiveOptics> = Field {
                     pixel_scale,
@@ -108,7 +124,7 @@ impl<T: Observer> SeeingLimitedField<T> {
                     flux,
                     lufn,
                 };
-                field.intensity(None)
+                field.intensity(bar)
             };
             if let Some(lufn) = lufn {
                 intensity.iter_mut().for_each(|i| *i = lufn(*i));

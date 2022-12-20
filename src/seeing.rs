@@ -68,14 +68,31 @@ impl SeeingBuilder {
     /// Corrects the seeing with a Natural Guide Star Adaptive Optics system
     ///
     /// Only the fitting and anisoplanatism errors of the NGAO system are modeled.
-    /// The fitting error is set according to the Strehl ratio.
+    /// The fitting error is set according to the Strehl ratio (≥ 0.5).
     /// The anisoplanatism error is set only if a guide star is given.
     pub fn ngao(self, strehl_ratio: f64, guide_star: Option<Star>) -> Self {
         if strehl_ratio < 0.5 {
             panic!("Strel ratio must be at least 0.5 or higher");
         }
         Self {
-            adaptive_optics: Some(AdaptiveOpticsCorrection::new(strehl_ratio, guide_star)),
+            adaptive_optics: Some(AdaptiveOpticsCorrection::ngao(strehl_ratio, guide_star)),
+            ..self
+        }
+    }
+    /// Corrects the seeing with a Laser Guide Star Adaptive Optics system
+    ///
+    /// Only the fitting and anisoplanatism errors of the LTAO system are modeled.
+    /// The fitting error is set according to the Strehl ratio (≥ 0.5).
+    /// The anisoplanatism error is set only outside the Laser guide stars radius.
+    pub fn ltao(self, strehl_ratio: f64, laser_guide_star_radius: SkyAngle<f64>) -> Self {
+        if strehl_ratio < 0.5 {
+            panic!("Strel ratio must be at least 0.5 or higher");
+        }
+        Self {
+            adaptive_optics: Some(AdaptiveOpticsCorrection::ltao(
+                strehl_ratio,
+                laser_guide_star_radius,
+            )),
             ..self
         }
     }

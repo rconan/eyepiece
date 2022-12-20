@@ -1,5 +1,6 @@
 use num_complex::Complex;
 use num_traits::Zero;
+use skyangle::SkyAngle;
 
 use crate::{optust, Star, ZpDft};
 
@@ -95,13 +96,23 @@ impl TransferFunction {
 pub struct AdaptiveOpticsCorrection {
     strehl_ratio: f64,
     guide_star: Option<Star>,
+    laser_guide_star_radius: Option<SkyAngle<f64>>,
     transfer_function: Option<TransferFunction>,
 }
 impl AdaptiveOpticsCorrection {
-    pub fn new(strehl_ratio: f64, guide_star: Option<Star>) -> Self {
+    pub fn ngao(strehl_ratio: f64, guide_star: Option<Star>) -> Self {
         Self {
             strehl_ratio,
             guide_star,
+            laser_guide_star_radius: None,
+            transfer_function: None,
+        }
+    }
+    pub fn ltao(strehl_ratio: f64, laser_guide_star_radius: SkyAngle<f64>) -> Self {
+        Self {
+            strehl_ratio,
+            guide_star: None,
+            laser_guide_star_radius: Some(laser_guide_star_radius),
             transfer_function: None,
         }
     }
@@ -202,20 +213,49 @@ impl AdaptiveOpticsCorrection {
                     q as usize
                 };
                 let f = x.hypot(y);
-
                 let buffer = optust::phase::spectrum(f, fried_parameter, outer_scale);
+
                 let (x_star, y_star) = star.coordinates;
-                let (x_gs, y_gs) = self.guide_star.unwrap_or_default().coordinates;
-                let delta_x = x_star - x_gs;
-                let delta_y = y_star - y_gs;
-                let anisoplanatism = TurbulenceProfile::new()
-                    .into_iter()
-                    .map(|(h, w)| {
-                        let red = 2. * std::f64::consts::PI * h * (x * delta_x + y * delta_y);
-                        w * (1. - red.cos())
-                    })
-                    .sum::<f64>()
-                    * buffer;
+                let r_star = x_star.to_radians().hypot(y_star.to_radians());
+
+                let anisoplanatism = match self.laser_guide_star_radius {
+                    Some(radius) => {
+                        if r_star > radius.to_radians() {
+                            let o_star = y_star.to_radians().atan2(x_star.to_radians());
+                            let (s, c) = o_star.sin_cos();
+                            let (x_gs, y_gs) =
+                                (SkyAngle::Radian(radius * c), SkyAngle::Radian(radius * s));
+                            let delta_x = x_star - x_gs;
+                            let delta_y = y_star - y_gs;
+                            TurbulenceProfile::new()
+                                .into_iter()
+                                .map(|(h, w)| {
+                                    let red =
+                                        2. * std::f64::consts::PI * h * (x * delta_x + y * delta_y);
+                                    w * (1. - red.cos())
+                                })
+                                .sum::<f64>()
+                                * buffer
+                        } else {
+                            0f64
+                        }
+                    }
+                    None => {
+                        let (x_gs, y_gs) = self.guide_star.unwrap_or_default().coordinates;
+                        let delta_x = x_star - x_gs;
+                        let delta_y = y_star - y_gs;
+                        TurbulenceProfile::new()
+                            .into_iter()
+                            .map(|(h, w)| {
+                                let red =
+                                    2. * std::f64::consts::PI * h * (x * delta_x + y * delta_y);
+                                w * (1. - red.cos())
+                            })
+                            .sum::<f64>()
+                            * buffer
+                    }
+                };
+
                 let kk = ii * n + jj;
                 psd[kk].re = if f < fitting_cutoff {
                     anisoplanatism
