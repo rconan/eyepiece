@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 use super::{AdaptiveOptics, DiffractionLimited, SeeingLimited};
-use crate::{atmosphere_transfer_function, SeeingBuilder, ZpDft};
+use crate::{atmosphere_transfer_function, SeeingBuilder, Star, ZpDft};
 use num_complex::Complex;
 
 /// Observing configurations
@@ -46,6 +46,7 @@ pub trait Intensity {
         &mut self,
         pupil: Vec<Complex<f64>>,
         intensity_sampling: usize,
+        star: &Star,
     ) -> Option<Vec<f64>>;
 }
 impl Intensity for Observing<DiffractionLimited> {
@@ -53,6 +54,7 @@ impl Intensity for Observing<DiffractionLimited> {
         &mut self,
         pupil: Vec<Complex<f64>>,
         intensity_sampling: usize,
+        _: &Star,
     ) -> Option<Vec<f64>> {
         self.fft.as_mut().map(|zp_dft| {
             zp_dft
@@ -91,6 +93,7 @@ impl Intensity for Observing<SeeingLimited> {
         &mut self,
         pupil: Vec<Complex<f64>>,
         intensity_sampling: usize,
+        _: &Star,
     ) -> Option<Vec<f64>> {
         self.fft
             .as_mut()
@@ -147,6 +150,7 @@ impl Intensity for Observing<AdaptiveOptics> {
         &mut self,
         pupil: Vec<Complex<f64>>,
         intensity_sampling: usize,
+        star: &Star,
     ) -> Option<Vec<f64>> {
         self.fft
             .as_mut()
@@ -161,10 +165,11 @@ impl Intensity for Observing<AdaptiveOptics> {
                         adaptive_optics,
                     },
                 )| {
-                    let otf: Vec<_> = adaptive_optics
-                        .as_mut()
-                        .unwrap()
-                        .transfer_function(*fried_parameter, *outer_scale);
+                    let otf: Vec<_> = adaptive_optics.as_mut().unwrap().transfer_function(
+                        *fried_parameter,
+                        *outer_scale,
+                        star,
+                    );
                     // .into_iter()
                     // .map(|o| Complex::new(o, 0f64))
                     // .collect();

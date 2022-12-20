@@ -47,7 +47,15 @@ impl<T: Observer> Builder<SeeingLimitedField<T>> for (FieldBuilder<T>, Vec<Seein
         }
     }
 }
-
+impl<T: Observer> Builder<SeeingLimitedField<T>> for (FieldBuilder<T>, SeeingBuilder) {
+    /// Creates a set of seeing limited fields from a [FieldBuilder] and a [Vec] of [SeeingBuilder]
+    fn build(self) -> SeeingLimitedField<T> {
+        <(FieldBuilder<T>, Vec<SeeingBuilder>) as Builder<SeeingLimitedField<T>>>::build((
+            self.0,
+            vec![self.1],
+        ))
+    }
+}
 impl<T: Observer> SeeingLimitedField<T> {
     /// Return the # of seeing conditions
     pub fn len(&self) -> usize {

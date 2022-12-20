@@ -6,6 +6,29 @@ use crate::{optust, Star, ZpDft};
 const DELTA_0: f64 = 2.5e-2;
 
 #[derive(Debug)]
+struct TurbulenceProfile {
+    height: Vec<f64>,
+    weight: Vec<f64>,
+}
+impl TurbulenceProfile {
+    pub fn new() -> Self {
+        Self {
+            height: vec![25., 275., 425., 1250., 4000., 8000., 13000.],
+            weight: vec![0.1257, 0.0874, 0.0666, 0.3498, 0.2273, 0.0681, 0.0751],
+        }
+    }
+}
+impl IntoIterator for TurbulenceProfile {
+    type Item = (f64, f64);
+
+    type IntoIter = std::iter::Zip<std::vec::IntoIter<f64>, std::vec::IntoIter<f64>>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.height.into_iter().zip(self.weight.into_iter())
+    }
+}
+
+#[derive(Debug)]
 struct TransferFunction {
     fft: ZpDft,
     d: f64,
@@ -146,6 +169,7 @@ impl AdaptiveOpticsCorrection {
         &mut self,
         fried_parameter: f64,
         outer_scale: f64,
+        star: &Star,
     ) -> Vec<Complex<f64>> {
         let TransferFunction {
             fft,
@@ -178,14 +202,26 @@ impl AdaptiveOpticsCorrection {
                     q as usize
                 };
                 let f = x.hypot(y);
-                if let Some(_star) = self.guide_star {
-                    todo!()
-                }
-                if f < fitting_cutoff {
-                    continue;
-                }
+
+                let buffer = optust::phase::spectrum(f, fried_parameter, outer_scale);
+                let (x_star, y_star) = star.coordinates;
+                let (x_gs, y_gs) = self.guide_star.unwrap_or_default().coordinates;
+                let delta_x = x_star - x_gs;
+                let delta_y = y_star - y_gs;
+                let anisoplanatism = TurbulenceProfile::new()
+                    .into_iter()
+                    .map(|(h, w)| {
+                        let red = 2. * std::f64::consts::PI * h * (x * delta_x + y * delta_y);
+                        w * (1. - red.cos())
+                    })
+                    .sum::<f64>()
+                    * buffer;
                 let kk = ii * n + jj;
-                psd[kk].re = optust::phase::spectrum(f, fried_parameter, outer_scale);
+                psd[kk].re = if f < fitting_cutoff {
+                    anisoplanatism
+                } else {
+                    buffer + anisoplanatism
+                };
             }
         }
         let covariance = fft.zero_padding(psd).process().buffer();

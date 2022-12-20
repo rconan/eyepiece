@@ -111,7 +111,7 @@ impl<T: Observer> FieldBuilder<T> {
             ..self
         }
     }
-    /// Colormap look-up function
+    /// Image colormap look-up function
     pub fn lufn(self, lut: fn(f64) -> f64) -> Self {
         Self {
             lufn: Some(lut),

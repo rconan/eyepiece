@@ -248,7 +248,7 @@ where
             pupil.iter_mut().for_each(|p| *p *= n_photon.sqrt());
             let mut intensity = self
                 .observing_mode
-                .intensity(pupil, intensity_sampling)
+                .intensity(pupil, intensity_sampling, star)
                 .unwrap();
             // intensity set to # of photon & Poisson noise
             log::debug!("Image flux: {n_photon}");
