@@ -24,6 +24,7 @@ where
     pub observer: T,
     pub(super) observing_mode: Observing<Mode>,
     pub(super) flux: Option<f64>,
+    pub(super) lufn: Option<fn(f64) -> f64>,
 }
 impl<T: Observer> Display for Field<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -80,6 +81,7 @@ impl<T: Observer> Builder<Field<T, DiffractionLimited>> for FieldBuilder<T> {
             observer,
             seeing: _,
             flux,
+            lufn: lut,
         } = self;
         Field {
             pixel_scale,
@@ -91,6 +93,7 @@ impl<T: Observer> Builder<Field<T, DiffractionLimited>> for FieldBuilder<T> {
             observer,
             observing_mode: Observing::diffraction_limited(),
             flux,
+            lufn: lut,
         }
     }
 }
@@ -107,6 +110,7 @@ impl<T: Observer> Builder<Field<T, SeeingLimited>> for FieldBuilder<T> {
             observer,
             seeing,
             flux,
+            lufn: lut,
         } = self;
         Field {
             pixel_scale,
@@ -116,8 +120,11 @@ impl<T: Observer> Builder<Field<T, SeeingLimited>> for FieldBuilder<T> {
             exposure,
             poisson_noise,
             observer,
-            observing_mode: Observing::seeing_limited(seeing),
+            observing_mode: Observing::seeing_limited(
+                seeing.map(|seeing| seeing.wavelength(photometry[0])),
+            ),
             flux,
+            lufn: lut,
         }
     }
 }
@@ -134,7 +141,9 @@ impl<T: Observer> Builder<Field<T, AdaptiveOptics>> for FieldBuilder<T> {
             observer,
             seeing,
             flux,
+            lufn: lut,
         } = self;
+
         Field {
             pixel_scale,
             field_of_view,
@@ -143,8 +152,11 @@ impl<T: Observer> Builder<Field<T, AdaptiveOptics>> for FieldBuilder<T> {
             exposure,
             poisson_noise,
             observer,
-            observing_mode: Observing::adaptive_optics(seeing),
+            observing_mode: Observing::seeing_limited(
+                seeing.map(|seeing| seeing.wavelength(photometry[0])),
+            ),
             flux,
+            lufn: lut,
         }
     }
 }
@@ -207,7 +219,9 @@ where
                 continue;
             }
             let n_photon = self.flux.unwrap_or(
-                self.photometry.n_photon(star.magnitude) * self.observer.area() * self.exposure,
+                self.photometry.n_photon(star.magnitude)
+                    * self.exposure
+                    * self.observer.resolution().powi(2), //  * self.observer.area() ,
             );
             // star coordinates
             let (x, y) = star.coordinates;
@@ -230,22 +244,18 @@ where
                 ))
             };
             // star intensity map
+            let mut pupil = self.observer.pupil(shift);
+            pupil.iter_mut().for_each(|p| *p *= n_photon.sqrt());
             let mut intensity = self
                 .observing_mode
-                .intensity(self.observer.pupil(shift), intensity_sampling)
+                .intensity(pupil, intensity_sampling)
                 .unwrap();
             // intensity set to # of photon & Poisson noise
-            let flux: f64 = intensity.iter().cloned().sum();
-            let inorm = n_photon / flux;
             log::debug!("Image flux: {n_photon}");
             if self.poisson_noise {
                 intensity.iter_mut().for_each(|i| {
-                    let poi = Poisson::new(*i * inorm).unwrap();
+                    let poi = Poisson::new(*i).unwrap();
                     *i = poi.sample(&mut rng)
-                })
-            } else {
-                intensity.iter_mut().for_each(|i| {
-                    *i *= inorm;
                 })
             };
             // shift and add star images
@@ -263,7 +273,7 @@ where
                     }
                     let k = i * n + j;
                     let kk = ii * n + jj;
-                    buffer[kk as usize] += intensity[k as usize] * n_photon;
+                    buffer[kk as usize] += intensity[k as usize];
                 }
             }
         }
@@ -296,6 +306,9 @@ where
     /// Computes image and save it to file
     pub fn save<P: AsRef<Path>>(&mut self, path: P, bar: Option<ProgressBar>) -> ImageResult<()> {
         let mut intensity = self.intensity(bar);
+        if let Some(lut) = self.lufn {
+            intensity.iter_mut().for_each(|i| *i = lut(*i));
+        }
         let max_intensity = intensity.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
         intensity.iter_mut().for_each(|i| *i /= max_intensity);
 

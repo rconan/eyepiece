@@ -10,7 +10,7 @@ pub use field_builder::FieldBuilder;
 mod polychromatic;
 pub use polychromatic::PolychromaticField;
 mod seeing_limited;
-pub use seeing_limited::SeeingLimitedFields;
+pub use seeing_limited::SeeingLimitedField;
 mod observing_mode;
 pub use observing_mode::{Intensity, Observing};
 

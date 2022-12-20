@@ -1,6 +1,6 @@
 use std::{env, path::Path};
 
-use eyepiece::{Builder, FieldBuilder, SeeingBuilder, SeeingLimitedFields, Telescope};
+use eyepiece::{Builder, FieldBuilder, SeeingBuilder, SeeingLimitedField, Telescope};
 use skyangle::SkyAngle;
 
 fn main() -> anyhow::Result<()> {
@@ -18,7 +18,7 @@ fn main() -> anyhow::Result<()> {
         })
         .collect();
 
-    let mut field: SeeingLimitedFields<Telescope> = (
+    let mut field: SeeingLimitedField<Telescope> = (
         FieldBuilder::new(tel)
             .pixel_scale(SkyAngle::Arcsecond(0.01))
             .field_of_view(200),

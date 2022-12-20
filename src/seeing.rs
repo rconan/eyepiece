@@ -1,8 +1,7 @@
 use skyangle::SkyAngle;
 
-use crate::Photometry;
+use crate::{AdaptiveOpticsCorrection, Photometry, Star};
 
-#[derive(Clone, Debug, Copy)]
 /// Atmospheric seeing builder
 ///
 /// # Example
@@ -14,9 +13,11 @@ use crate::Photometry;
 ///     .zenith_angle(SkyAngle::Degree(30.))
 ///     .outer_scale(30.);
 /// ```
+#[derive(Debug, Clone)]
 pub struct SeeingBuilder {
     pub fried_parameter: f64,
     pub outer_scale: f64,
+    pub adaptive_optics: Option<AdaptiveOpticsCorrection>,
 }
 impl SeeingBuilder {
     /// Creates a new atmospheric seeing builder by setting the Fried parameter in meters
@@ -26,6 +27,7 @@ impl SeeingBuilder {
         Self {
             fried_parameter,
             outer_scale: 25.,
+            adaptive_optics: None,
         }
     }
     /// Sets the atmosphere outer scale on meters
@@ -43,7 +45,7 @@ impl SeeingBuilder {
             ..self
         }
     }
-    /// Reduces the seeing by the given fraction
+    /// Reduces the seeing FWHM by the given fraction
     pub fn glao(self, corrected_fraction: f64) -> Self {
         assert!(
             corrected_fraction < 1f64,
@@ -60,6 +62,20 @@ impl SeeingBuilder {
         Self {
             fried_parameter: self.fried_parameter
                 * (photometry.wavelength / 0.5e-6_f64).powf(1.2_f64),
+            ..self
+        }
+    }
+    /// Corrects the seeing with a Natural Guide Star Adaptive Optics system
+    ///
+    /// Only the fitting and anisoplanatism errors of the NGAO system are modeled.
+    /// The fitting error is set according to the Strehl ratio.
+    /// The anisoplanatism error is set only if a guide star is given.
+    pub fn ngao(self, strehl_ratio: f64, guide_star: Option<Star>) -> Self {
+        if strehl_ratio < 0.5 {
+            panic!("Strel ratio must be at least 0.5 or higher");
+        }
+        Self {
+            adaptive_optics: Some(AdaptiveOpticsCorrection::new(strehl_ratio, guide_star)),
             ..self
         }
     }

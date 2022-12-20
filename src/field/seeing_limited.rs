@@ -4,7 +4,7 @@ use image::{ImageResult, Rgb, RgbImage};
 use indicatif::ProgressBar;
 
 use super::{Builder, Field, FieldBuilder, Observing, SeeingLimited};
-use crate::{Observer, SeeingBuilder};
+use crate::{AdaptiveOptics, Observer, SeeingBuilder};
 
 /**
 Seeing limited fields container
@@ -12,7 +12,7 @@ Seeing limited fields container
 A set of seeing limited fields with the same setup but for the seeing conditions.
 ## Example
 ```
-use eyepiece::{Builder, FieldBuilder, SeeingBuilder, SeeingLimitedFields, Telescope};
+use eyepiece::{Builder, FieldBuilder, SeeingBuilder, SeeingLimitedField, Telescope};
 use skyangle::SkyAngle;
 
 let tel = Telescope::new(8.).build();
@@ -24,7 +24,7 @@ let seeing: Vec<_> = (1..=5)
             .zenith_angle(SkyAngle::Degree(30.))
     })
     .collect();
-let mut field: SeeingLimitedFields<Telescope> = (
+let mut field: SeeingLimitedField<Telescope> = (
     FieldBuilder::new(tel)
         .pixel_scale(SkyAngle::Arcsecond(0.01))
         .field_of_view(200),
@@ -34,21 +34,21 @@ let mut field: SeeingLimitedFields<Telescope> = (
 field.save("seeing_vs_outer-scale.png", None).unwrap();
 ```
 */
-pub struct SeeingLimitedFields<T: Observer> {
+pub struct SeeingLimitedField<T: Observer> {
     field_builder: FieldBuilder<T>,
     seeing_builders: Vec<SeeingBuilder>,
 }
-impl<T: Observer> Builder<SeeingLimitedFields<T>> for (FieldBuilder<T>, Vec<SeeingBuilder>) {
+impl<T: Observer> Builder<SeeingLimitedField<T>> for (FieldBuilder<T>, Vec<SeeingBuilder>) {
     /// Creates a set of seeing limited fields from a [FieldBuilder] and a [Vec] of [SeeingBuilder]
-    fn build(self) -> SeeingLimitedFields<T> {
-        SeeingLimitedFields {
+    fn build(self) -> SeeingLimitedField<T> {
+        SeeingLimitedField {
             field_builder: self.0,
             seeing_builders: self.1,
         }
     }
 }
 
-impl<T: Observer> SeeingLimitedFields<T> {
+impl<T: Observer> SeeingLimitedField<T> {
     /// Return the # of seeing conditions
     pub fn len(&self) -> usize {
         self.seeing_builders.len()
@@ -67,21 +67,45 @@ impl<T: Observer> SeeingLimitedFields<T> {
                 observer,
                 seeing: _,
                 flux,
+                lufn,
             } = self.field_builder.clone();
-            let mut field: Field<T, SeeingLimited> = Field {
-                pixel_scale,
-                field_of_view,
-                photometry: photometry[0],
-                objects,
-                exposure,
-                poisson_noise,
-                observer,
-                observing_mode: Observing::seeing_limited(Some(
-                    seeing_builder.wavelength(photometry[0]),
-                )),
-                flux,
+            let mut intensity = if seeing_builder.adaptive_optics.is_none() {
+                let mut field: Field<T, SeeingLimited> = Field {
+                    pixel_scale,
+                    field_of_view,
+                    photometry: photometry[0],
+                    objects,
+                    exposure,
+                    poisson_noise,
+                    observer,
+                    observing_mode: Observing::seeing_limited(Some(
+                        seeing_builder.clone().wavelength(photometry[0]),
+                    )),
+                    flux,
+                    lufn,
+                };
+                field.intensity(None)
+            } else {
+                let mut field: Field<T, AdaptiveOptics> = Field {
+                    pixel_scale,
+                    field_of_view,
+                    photometry: photometry[0],
+                    objects,
+                    exposure,
+                    poisson_noise,
+                    observer,
+                    observing_mode: Observing::seeing_limited(Some(
+                        seeing_builder.clone().wavelength(photometry[0]),
+                    )),
+                    flux,
+                    lufn,
+                };
+                field.intensity(None)
             };
-            intensities.push(field.intensity(None));
+            if let Some(lufn) = lufn {
+                intensity.iter_mut().for_each(|i| *i = lufn(*i));
+            }
+            intensities.push(intensity);
         }
         let max_intensity = intensities
             .iter()

@@ -1,6 +1,6 @@
 use skyangle::SkyAngle;
 
-use crate::{Observer, Photometry};
+use crate::{Field, Observer, Photometry};
 
 #[derive(Debug, Clone)]
 /// Pixel scale possible representations ...
@@ -24,6 +24,11 @@ impl Default for PixelScale {
 impl From<SkyAngle<f64>> for PixelScale {
     fn from(alpha: SkyAngle<f64>) -> Self {
         PixelScale::SkyAngle(alpha)
+    }
+}
+impl<T: Observer, M> From<&Field<T, M>> for PixelScale {
+    fn from(field: &Field<T, M>) -> Self {
+        PixelScale::SkyAngle(SkyAngle::Radian(field.resolution()))
     }
 }
 impl PixelScale {

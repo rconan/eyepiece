@@ -39,8 +39,9 @@ where
                 observer,
                 seeing,
                 flux,
+                lufn,
             } = self.0.clone();
-            intensities.push(if seeing.is_none() {
+            let mut intensity = if seeing.is_none() {
                 let mut field: Field<T, DiffractionLimited> = Field {
                     pixel_scale,
                     field_of_view,
@@ -51,6 +52,7 @@ where
                     observer,
                     observing_mode: Observing::diffraction_limited(),
                     flux,
+                    lufn,
                 };
                 field.intensity(None)
             } else {
@@ -66,10 +68,16 @@ where
                         seeing.map(|seeing| seeing.wavelength(field_photometry)),
                     ),
                     flux,
+                    lufn,
                 };
                 field.intensity(None)
-            });
+            };
+            if let Some(lufn) = lufn {
+                intensity.iter_mut().for_each(|i| *i = lufn(*i));
+            }
+            intensities.push(intensity);
         }
+
         let max_intensity = intensities
             .iter()
             .map(|intensity| intensity.iter().cloned().fold(f64::NEG_INFINITY, f64::max))

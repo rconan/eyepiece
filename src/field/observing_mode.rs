@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 use super::{AdaptiveOptics, DiffractionLimited, SeeingLimited};
-use crate::{atmosphere_transfer_function, AdaptiveOpticsCorrection, SeeingBuilder, ZpDft};
+use crate::{atmosphere_transfer_function, SeeingBuilder, ZpDft};
 use num_complex::Complex;
 
 /// Observing configurations
@@ -10,7 +10,6 @@ pub struct Observing<Mode> {
     ifft: Option<ZpDft>,
     otf: Option<Vec<Complex<f64>>>,
     seeing: Option<SeeingBuilder>,
-    adaptive_optics: Option<AdaptiveOpticsCorrection>,
     mode: PhantomData<Mode>,
 }
 impl Observing<DiffractionLimited> {
@@ -21,12 +20,14 @@ impl Observing<DiffractionLimited> {
             ifft: None,
             otf: None,
             seeing: None,
-            adaptive_optics: None,
             mode: PhantomData,
         }
     }
 }
-impl Observing<SeeingLimited> {
+pub trait SeeingModes {}
+impl SeeingModes for SeeingLimited {}
+impl SeeingModes for AdaptiveOptics {}
+impl<M: SeeingModes> Observing<M> {
     /// Seeing limited observing mode
     pub fn seeing_limited(seeing: Option<SeeingBuilder>) -> Self {
         Self {
@@ -34,24 +35,11 @@ impl Observing<SeeingLimited> {
             ifft: None,
             otf: None,
             seeing,
-            adaptive_optics: None,
             mode: PhantomData,
         }
     }
 }
-impl Observing<AdaptiveOptics> {
-    /// Seeing limited observing mode
-    pub fn adaptive_optics(seeing: Option<SeeingBuilder>) -> Self {
-        Self {
-            fft: None,
-            ifft: None,
-            otf: None,
-            seeing,
-            adaptive_optics: None,
-            mode: PhantomData,
-        }
-    }
-}
+
 pub trait Intensity {
     fn init_fft(&mut self, n_dft: usize, pupil_resolution: f64);
     fn intensity(
@@ -89,6 +77,7 @@ impl Intensity for Observing<SeeingLimited> {
             Some(SeeingBuilder {
                 fried_parameter,
                 outer_scale,
+                ..
             }) => Some(
                 atmosphere_transfer_function(fried_parameter, outer_scale, pupil_resolution, n_dft)
                     .into_iter()
@@ -127,6 +116,9 @@ impl Intensity for Observing<SeeingLimited> {
                     .shift()
                     .resize(intensity_sampling)
                     .norm()
+                    .into_iter()
+                    .map(|x| x / zp_dft.len().pow(2) as f64)
+                    .collect()
             })
     }
 }
@@ -134,7 +126,22 @@ impl Intensity for Observing<AdaptiveOptics> {
     fn init_fft(&mut self, n_dft: usize, pupil_resolution: f64) {
         self.fft = Some(ZpDft::forward(n_dft));
         self.ifft = Some(ZpDft::inverse(n_dft));
-        self.adaptive_optics = Some(AdaptiveOpticsCorrection::new(n_dft, pupil_resolution));
+        self.seeing.as_mut().map(
+            |SeeingBuilder {
+                 fried_parameter,
+                 outer_scale,
+                 adaptive_optics,
+             }| {
+                adaptive_optics.as_mut().map(|aoc| {
+                    aoc.init_transfer_function(
+                        n_dft,
+                        pupil_resolution,
+                        *fried_parameter,
+                        *outer_scale,
+                    )
+                })
+            },
+        );
     }
     fn intensity(
         &mut self,
@@ -144,24 +151,23 @@ impl Intensity for Observing<AdaptiveOptics> {
         self.fft
             .as_mut()
             .zip(self.ifft.as_mut())
-            .zip(self.seeing)
-            .zip(self.adaptive_optics.as_mut())
+            .zip(self.seeing.as_mut())
             .map(
                 |(
-                    (
-                        (zp_dft, zp_idft),
-                        SeeingBuilder {
-                            fried_parameter,
-                            outer_scale,
-                        },
-                    ),
-                    aoc,
+                    (zp_dft, zp_idft),
+                    SeeingBuilder {
+                        fried_parameter,
+                        outer_scale,
+                        adaptive_optics,
+                    },
                 )| {
-                    let otf: Vec<_> = aoc
-                        .transfer_function(fried_parameter, outer_scale)
-                        .into_iter()
-                        .map(|o| Complex::new(o, 0f64))
-                        .collect();
+                    let otf: Vec<_> = adaptive_optics
+                        .as_mut()
+                        .unwrap()
+                        .transfer_function(*fried_parameter, *outer_scale);
+                    // .into_iter()
+                    // .map(|o| Complex::new(o, 0f64))
+                    // .collect();
                     zp_idft
                         .zero_padding(
                             zp_dft
@@ -181,6 +187,9 @@ impl Intensity for Observing<AdaptiveOptics> {
                         .shift()
                         .resize(intensity_sampling)
                         .norm()
+                        .into_iter()
+                        .map(|x| x / zp_dft.len().pow(2) as f64)
+                        .collect()
                 },
             )
     }

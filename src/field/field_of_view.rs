@@ -23,6 +23,11 @@ impl From<usize> for FieldOfView {
         FieldOfView::PixelScale(n)
     }
 }
+impl<T: Observer, M> From<&Field<T, M>> for FieldOfView {
+    fn from(field: &Field<T, M>) -> Self {
+        FieldOfView::SkyAngle(SkyAngle::Radian(field.field_of_view()))
+    }
+}
 impl FieldOfView {
     pub(super) fn get<T: Observer, M>(&self, field: &Field<T, M>) -> f64 {
         match self {

@@ -29,6 +29,7 @@ pub struct FieldBuilder<T: Observer> {
     pub(super) observer: T,
     pub(super) seeing: Option<SeeingBuilder>,
     pub(super) flux: Option<f64>,
+    pub(super) lufn: Option<fn(f64) -> f64>,
 }
 impl<T: Observer> FieldBuilder<T> {
     /// Creates a default field
@@ -46,6 +47,7 @@ impl<T: Observer> FieldBuilder<T> {
             observer,
             seeing: None,
             flux: None,
+            lufn: None,
         }
     }
     /// Sets the [pixel scale](PixelScale)
@@ -106,6 +108,13 @@ impl<T: Observer> FieldBuilder<T> {
     pub fn seeing_limited(self, seeing_builder: SeeingBuilder) -> Self {
         Self {
             seeing: Some(seeing_builder),
+            ..self
+        }
+    }
+    /// Colormap look-up function
+    pub fn lufn(self, lut: fn(f64) -> f64) -> Self {
+        Self {
+            lufn: Some(lut),
             ..self
         }
     }

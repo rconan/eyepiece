@@ -1,6 +1,6 @@
 use num_complex::Complex;
 use rustfft::{num_traits::Zero, Fft, FftPlanner};
-use std::{mem, sync::Arc};
+use std::{fmt::Debug, mem, sync::Arc};
 
 type Cpx = Complex<f64>;
 
@@ -12,6 +12,16 @@ pub struct ZpDft {
     scratch: Vec<Cpx>,
     len: i64,
     fft: Arc<dyn Fft<f64>>,
+}
+impl Debug for ZpDft {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ZpDft")
+            .field("zero_padded_buffer", &self.zero_padded_buffer)
+            .field("scratch", &self.scratch)
+            .field("len", &self.len)
+            .field("fft", &())
+            .finish()
+    }
 }
 impl ZpDft {
     /// Forward Fourier transfrom
