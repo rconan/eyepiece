@@ -1,6 +1,8 @@
 use std::{env, path::Path};
 
-use eyepiece::{Builder, FieldBuilder, PixelScale, SeeingBuilder, SeeingLimitedField, Telescope};
+use eyepiece::{
+    Builder, FieldBuilder, PixelScale, SaveOptions, SeeingBuilder, SeeingLimitedField, Telescope,
+};
 use skyangle::SkyAngle;
 
 fn main() -> anyhow::Result<()> {
@@ -24,12 +26,14 @@ fn main() -> anyhow::Result<()> {
         FieldBuilder::new(tel)
             .pixel_scale(PixelScale::NyquistFraction(2))
             .field_of_view(SkyAngle::Arcsecond(1.5f64))
-            .photometry("V")
-            .lufn(f64::cbrt),
+            .photometry("V"),
         aos,
     )
         .build();
-    ao_fields.save(path.join("ngaos-image.png"), None)?;
+    ao_fields.save(
+        path.join("ngaos-image.png"),
+        SaveOptions::new().lufn(f64::cbrt),
+    )?;
 
     Ok(())
 }

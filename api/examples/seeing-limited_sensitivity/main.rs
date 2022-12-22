@@ -23,6 +23,6 @@ fn main() -> anyhow::Result<()> {
         .polychromatic(PhotometricBands::default().into_iter().skip(2).collect())
         .seeing_limited(SeeingBuilder::new(16e-2).zenith_angle(SkyAngle::Degree(30.)))
         .build();
-    field.save(path.join("seeing-limited_IJHK.png"), None)?;
+    field.save(path.join("seeing-limited_IJHK.png"), Default::default())?;
     Ok(())
 }

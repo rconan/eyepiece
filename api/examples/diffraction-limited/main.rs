@@ -1,4 +1,4 @@
-use eyepiece::{Builder, Field, FieldBuilder, Gmt, Hst, Jwst, StarDistribution};
+use eyepiece::{Builder, Field, FieldBuilder, Gmt, Hst, Jwst, SaveOptions, StarDistribution};
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 use skyangle::SkyAngle;
 use std::{env, thread};
@@ -44,7 +44,10 @@ fn main() -> anyhow::Result<()> {
                 .objects(&stars)
                 .build();
             field
-                .save(format!("hst_field{field_band}.png"), Some(hst_bar))
+                .save(
+                    format!("hst_field{field_band}.png"),
+                    SaveOptions::new().progress(hst_bar),
+                )
                 .unwrap();
         });
         s.spawn(|| {
@@ -55,7 +58,10 @@ fn main() -> anyhow::Result<()> {
                 .objects(&stars)
                 .build();
             field
-                .save(format!("jwst_field{field_band}.png"), Some(jwst_bar))
+                .save(
+                    format!("jwst_field{field_band}.png"),
+                    SaveOptions::new().progress(jwst_bar),
+                )
                 .unwrap();
         });
         s.spawn(|| {
@@ -66,7 +72,10 @@ fn main() -> anyhow::Result<()> {
                 .objects(&stars)
                 .build();
             field
-                .save(format!("gmt_field{field_band}.png"), Some(gmt_bar))
+                .save(
+                    format!("gmt_field{field_band}.png"),
+                    SaveOptions::new().progress(gmt_bar),
+                )
                 .unwrap();
         });
     });

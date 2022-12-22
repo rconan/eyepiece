@@ -22,7 +22,7 @@
 //! #    .pixel_scale(PixelScale::NyquistFraction(2))
 //! #    .field_of_view(21)
 //! #    .build();
-//! field.save("field.png", None).unwrap();
+//! field.save("field.png", Default::default()).unwrap();
 //! ```
 //!
 //! More examples can be found [here](https://github.com/rconan/eyepiece/tree/main/examples)
@@ -40,10 +40,7 @@ pub use telescope::{Gmt, Hexagon, Hst, Jwst, Telescope, TelescopeBuilder};
 mod photometry;
 pub use photometry::{PhotometricBands, Photometry};
 mod field;
-pub use field::{
-    AdaptiveOptics, Builder, Field, FieldBuilder, FieldOfView, PixelScale, PolychromaticField,
-    SeeingLimited, SeeingLimitedField,
-};
+pub use field::*;
 mod objects;
 pub use objects::{MagnitudeDistribution, Objects, Star, StarDistribution};
 mod seeing;

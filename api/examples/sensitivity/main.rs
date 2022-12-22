@@ -1,6 +1,6 @@
 use eyepiece::{
-    Builder, Field, FieldBuilder, Gmt, Hst, Jwst, MagnitudeDistribution, PixelScale, Star,
-    StarDistribution,
+    Builder, Field, FieldBuilder, Gmt, Hst, Jwst, MagnitudeDistribution, PixelScale, SaveOptions,
+    Star, StarDistribution,
 };
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 use skyangle::SkyAngle;
@@ -67,17 +67,26 @@ fn main() -> anyhow::Result<()> {
     thread::scope(|s| {
         s.spawn(|| {
             hst_field
-                .save(format!("hst_field{field_band}.tiff"), Some(hst_bar))
+                .save(
+                    format!("hst_field{field_band}.tiff"),
+                    SaveOptions::new().progress(hst_bar),
+                )
                 .unwrap();
         });
         s.spawn(|| {
             jwst_field
-                .save(format!("jwst_field{field_band}.tiff"), Some(jwst_bar))
+                .save(
+                    format!("jwst_field{field_band}.tiff"),
+                    SaveOptions::new().progress(jwst_bar),
+                )
                 .unwrap();
         });
         s.spawn(|| {
             gmt_field
-                .save(format!("gmt_field{field_band}.tiff"), Some(gmt_bar))
+                .save(
+                    format!("gmt_field{field_band}.tiff"),
+                    SaveOptions::new().progress(gmt_bar),
+                )
                 .unwrap();
         });
     });

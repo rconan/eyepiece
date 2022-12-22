@@ -7,6 +7,6 @@ fn main() -> anyhow::Result<()> {
         .pixel_scale(PixelScale::NyquistFraction(4))
         .build();
     println!("{field}");
-    field.save("image.png", None)?;
+    field.save("image.png", Default::default())?;
     Ok(())
 }

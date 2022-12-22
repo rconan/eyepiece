@@ -1,7 +1,8 @@
 use std::{env, path::Path};
 
 use eyepiece::{
-    AdaptiveOptics, Builder, Field, FieldBuilder, PixelScale, SeeingBuilder, Star, Telescope,
+    AdaptiveOptics, Builder, Field, FieldBuilder, PixelScale, SaveOptions, SeeingBuilder, Star,
+    Telescope,
 };
 use indicatif::ProgressBar;
 use skyangle::SkyAngle;
@@ -42,11 +43,12 @@ fn main() -> anyhow::Result<()> {
         .photometry("I")
         .objects(asterism)
         .seeing_limited(ltao)
-        .lufn(f64::cbrt)
         .build();
     ao_field.save(
         path.join("ltao-image.png"),
-        Some(ProgressBar::new(n_star as u64)),
+        SaveOptions::new()
+            .progress(ProgressBar::new(n_star as u64))
+            .lufn(f64::cbrt),
     )?;
 
     Ok(())

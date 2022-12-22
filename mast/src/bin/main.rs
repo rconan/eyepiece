@@ -1,4 +1,6 @@
-use eyepiece::{Builder, Field, FieldBuilder, SeeingBuilder, SeeingLimited, Telescope};
+use eyepiece::{
+    Builder, Field, FieldBuilder, Saturation, SaveOptions, SeeingBuilder, SeeingLimited, Telescope,
+};
 use indicatif::{ProgressBar, ProgressStyle};
 use mast_eyepiece::Mast;
 use skyangle::SkyAngle;
@@ -27,6 +29,11 @@ async fn main() -> anyhow::Result<()> {
     let style = "[{eta:>4}] {bar:40.cyan/blue} {pos:>5}/{len:5}";
     let bar = ProgressBar::new(n_star as u64);
     bar.set_style(ProgressStyle::with_template(&format!("{}", style)).unwrap());
-    field.save("image.png", Some(bar))?;
+    field.save(
+        "image.png",
+        SaveOptions::new()
+            .saturation(Saturation::LogSigma(3f64))
+            .progress(bar),
+    )?;
     Ok(())
 }

@@ -15,6 +15,6 @@ fn main() -> anyhow::Result<()> {
     let path = Path::new(&env::var("CARGO_MANIFEST_DIR")?)
         .join("examples")
         .join("polychromatic");
-    field.save(path.join("image.png"), None)?;
+    field.save(path.join("image.png"), Default::default())?;
     Ok(())
 }

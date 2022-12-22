@@ -1,8 +1,8 @@
 use image::{ImageResult, Rgb, RgbImage};
-use indicatif::ProgressBar;
+use indicatif::{MultiProgress, ProgressBar};
 use rand_distr::{Distribution, Poisson};
 use skyangle::Conversion;
-use std::{fmt::Display, path::Path};
+use std::{fmt::Display, fs::File, path::Path};
 
 use super::{
     AdaptiveOptics, Builder, DiffractionLimited, FieldBuilder, FieldOfView, Intensity, Observing,
@@ -24,7 +24,6 @@ where
     pub observer: T,
     pub(super) observing_mode: Observing<Mode>,
     pub(super) flux: Option<f64>,
-    pub(super) lufn: Option<fn(f64) -> f64>,
 }
 impl<T: Observer> Display for Field<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -81,7 +80,6 @@ impl<T: Observer> Builder<Field<T, DiffractionLimited>> for FieldBuilder<T> {
             observer,
             seeing: _,
             flux,
-            lufn: lut,
         } = self;
         Field {
             pixel_scale,
@@ -93,7 +91,6 @@ impl<T: Observer> Builder<Field<T, DiffractionLimited>> for FieldBuilder<T> {
             observer,
             observing_mode: Observing::diffraction_limited(),
             flux,
-            lufn: lut,
         }
     }
 }
@@ -110,7 +107,6 @@ impl<T: Observer> Builder<Field<T, SeeingLimited>> for FieldBuilder<T> {
             observer,
             seeing,
             flux,
-            lufn: lut,
         } = self;
         Field {
             pixel_scale,
@@ -124,7 +120,6 @@ impl<T: Observer> Builder<Field<T, SeeingLimited>> for FieldBuilder<T> {
                 seeing.map(|seeing| seeing.wavelength(photometry[0])),
             ),
             flux,
-            lufn: lut,
         }
     }
 }
@@ -141,7 +136,6 @@ impl<T: Observer> Builder<Field<T, AdaptiveOptics>> for FieldBuilder<T> {
             observer,
             seeing,
             flux,
-            lufn: lut,
         } = self;
 
         Field {
@@ -156,7 +150,6 @@ impl<T: Observer> Builder<Field<T, AdaptiveOptics>> for FieldBuilder<T> {
                 seeing.map(|seeing| seeing.wavelength(photometry[0])),
             ),
             flux,
-            lufn: lut,
         }
     }
 }
@@ -304,20 +297,108 @@ where
         image
     }
     /// Computes image and save it to file
-    pub fn save<P: AsRef<Path>>(&mut self, path: P, bar: Option<ProgressBar>) -> ImageResult<()> {
-        let mut intensity = self.intensity(bar);
-        if let Some(lut) = self.lufn {
-            intensity.iter_mut().for_each(|i| *i = lut(*i));
-        }
-        let max_intensity = intensity.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
-        intensity.iter_mut().for_each(|i| *i /= max_intensity);
+    pub fn save<P: AsRef<Path>>(&mut self, path: P, save_options: SaveOptions) -> ImageResult<()> {
+        let mut intensity = self.intensity(save_options.bar);
+        match path.as_ref().extension().and_then(|p| p.to_str()) {
+            Some("pkl") => serde_pickle::to_writer(
+                &mut File::create(path.as_ref())?,
+                &intensity,
+                Default::default(),
+            )
+            .expect(&format!(
+                "failed to write field intensity into pickle file {:?}",
+                path.as_ref()
+            )),
+            Some("png" | "jpg" | "tiff") => {
+                if let Some(lufn) = save_options.lufn {
+                    intensity.iter_mut().for_each(|i| *i = lufn(*i));
+                }
 
-        let lut = colorous::CUBEHELIX;
-        let n_px = self.field_of_view.to_pixelscale_ratio(self).ceil() as usize;
-        let mut img = RgbImage::new(n_px as u32, n_px as u32);
-        img.pixels_mut().zip(&intensity).for_each(|(p, i)| {
-            *p = Rgb(lut.eval_continuous(*i).into_array());
-        });
-        img.save(path)
+                let threshold = save_options.saturation.threshold(intensity.iter());
+                intensity.iter_mut().for_each(|i| *i /= threshold);
+
+                let lut = colorous::CUBEHELIX;
+                let n_px = self.field_of_view.to_pixelscale_ratio(self).ceil() as usize;
+                let mut img = RgbImage::new(n_px as u32, n_px as u32);
+                img.pixels_mut().zip(&intensity).for_each(|(p, i)| {
+                    *p = Rgb(lut.eval_continuous(*i).into_array());
+                });
+                img.save(path.as_ref()).expect(&format!(
+                    "failed to write field intensity into image {:?}",
+                    path.as_ref()
+                ))
+            }
+            _ => unimplemented!(),
+        };
+        Ok(())
+    }
+}
+
+/// Intensity saturation setting
+///
+/// The default is [Saturation::Max], meaning that there is no saturation.
+/// [Saturation::LogSigma]`(g)` sets the saturation threshold to `exp(m + g s)` where
+/// `m` and `s` are the mean and standart deviation, respectively, of the log of the intensity.
+#[derive(Default)]
+pub enum Saturation {
+    #[default]
+    Max,
+    LogSigma(f64),
+}
+impl Saturation {
+    /// Returns the intensity saturation threshold
+    pub fn threshold<'a, I: Iterator<Item = &'a f64>>(&self, data: I) -> f64 {
+        match self {
+            Saturation::Max => data.fold(f64::NEG_INFINITY, |m, &d| m.max(d)),
+            Saturation::LogSigma(_) => {
+                let ln_intensity: Vec<_> = data.filter(|&&i| i > 0f64).map(|&i| i.ln()).collect();
+                let mean_ln_intensity =
+                    ln_intensity.iter().cloned().sum::<f64>() / ln_intensity.len() as f64;
+                let var_ln_intensity = ln_intensity
+                    .iter()
+                    .map(|ln_i| (ln_i - mean_ln_intensity).powi(2))
+                    .sum::<f64>()
+                    / ln_intensity.len() as f64;
+                (mean_ln_intensity + 3. * var_ln_intensity.sqrt()).exp()
+            }
+        }
+    }
+}
+
+/// Field [Field::save] options
+#[derive(Default)]
+pub struct SaveOptions {
+    pub(super) bar: Option<ProgressBar>,
+    pub(super) mbar: Option<MultiProgress>,
+    pub(super) saturation: Saturation,
+    pub(super) lufn: Option<fn(f64) -> f64>,
+}
+impl SaveOptions {
+    /// Returns the default option
+    ///
+    /// The default options are:
+    ///  * no saturation
+    ///  * no progress bar
+    ///  * no colormap look-up function
+    pub fn new() -> Self {
+        Default::default()
+    }
+    /// Sets the [progress bar](indicatif::ProgressBar)
+    pub fn progress(self, bar: ProgressBar) -> Self {
+        Self {
+            bar: Some(bar),
+            ..self
+        }
+    }
+    /// Sets the [multi progress bar](indicatif::MultiProgress) holder
+    pub fn saturation(self, saturation: Saturation) -> Self {
+        Self { saturation, ..self }
+    }
+    /// Image colormap look-up function
+    pub fn lufn(self, lufn: fn(f64) -> f64) -> Self {
+        Self {
+            lufn: Some(lufn),
+            ..self
+        }
     }
 }

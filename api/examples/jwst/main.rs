@@ -8,6 +8,6 @@ fn main() -> anyhow::Result<()> {
         .field_of_view(41)
         .build();
     println!("{field}");
-    field.save("image.png", None)?;
+    field.save("image.png", Default::default())?;
     Ok(())
 }

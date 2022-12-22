@@ -5,3 +5,4 @@ Cargo.lock
 *.tiff
 *.svg
 *.data
+*.pkl

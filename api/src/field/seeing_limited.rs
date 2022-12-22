@@ -1,10 +1,10 @@
 use std::path::Path;
 
 use image::{ImageResult, Rgb, RgbImage};
-use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
+use indicatif::{ProgressBar, ProgressStyle};
 
 use super::{Builder, Field, FieldBuilder, Observing, SeeingLimited};
-use crate::{AdaptiveOptics, Observer, SeeingBuilder};
+use crate::{AdaptiveOptics, Observer, SaveOptions, SeeingBuilder};
 
 /**
 Seeing limited fields container
@@ -31,7 +31,7 @@ let mut field: SeeingLimitedField<Telescope> = (
     seeing,
 )
     .build();
-field.save("seeing_vs_outer-scale.png", None).unwrap();
+field.save("seeing_vs_outer-scale.png", Default::default()).unwrap();
 ```
 */
 pub struct SeeingLimitedField<T: Observer> {
@@ -62,11 +62,7 @@ impl<T: Observer> SeeingLimitedField<T> {
         self.seeing_builders.len()
     }
     /// Computes image and save it to file
-    pub fn save<P: AsRef<Path>>(
-        &mut self,
-        path: P,
-        mbar: Option<MultiProgress>,
-    ) -> ImageResult<()> {
+    pub fn save<P: AsRef<Path>>(&mut self, path: P, save_options: SaveOptions) -> ImageResult<()> {
         let mut intensities = vec![];
         for seeing_builder in self.seeing_builders.iter() {
             let FieldBuilder {
@@ -79,9 +75,9 @@ impl<T: Observer> SeeingLimitedField<T> {
                 observer,
                 seeing: _,
                 flux,
-                lufn,
             } = self.field_builder.clone();
-            let bar = mbar
+            let bar = save_options
+                .mbar
                 .as_ref()
                 .map(|mbar| mbar.add(ProgressBar::new(objects.len() as u64)));
             bar.as_ref().map(|bar| {
@@ -106,7 +102,6 @@ impl<T: Observer> SeeingLimitedField<T> {
                         seeing_builder.clone().wavelength(photometry[0]),
                     )),
                     flux,
-                    lufn,
                 };
                 field.intensity(bar)
             } else {
@@ -122,22 +117,21 @@ impl<T: Observer> SeeingLimitedField<T> {
                         seeing_builder.clone().wavelength(photometry[0]),
                     )),
                     flux,
-                    lufn,
                 };
                 field.intensity(bar)
             };
-            if let Some(lufn) = lufn {
+            if let Some(lufn) = save_options.lufn {
                 intensity.iter_mut().for_each(|i| *i = lufn(*i));
             }
             intensities.push(intensity);
         }
-        let max_intensity = intensities
-            .iter()
-            .map(|intensity| intensity.iter().cloned().fold(f64::NEG_INFINITY, f64::max))
-            .fold(f64::NEG_INFINITY, f64::max);
+
+        let threshold = save_options
+            .saturation
+            .threshold(intensities.iter().flatten());
         intensities
             .iter_mut()
-            .for_each(|intensity| intensity.iter_mut().for_each(|i| *i /= max_intensity));
+            .for_each(|intensity| intensity.iter_mut().for_each(|i| *i /= threshold));
 
         let lut = colorous::CUBEHELIX;
         let n_px = (intensities[0].len() as f64).sqrt() as usize;

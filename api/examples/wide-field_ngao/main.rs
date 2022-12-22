@@ -1,7 +1,8 @@
 use std::{env, path::Path};
 
 use eyepiece::{
-    AdaptiveOptics, Builder, Field, FieldBuilder, PixelScale, SeeingBuilder, Star, Telescope,
+    AdaptiveOptics, Builder, Field, FieldBuilder, PixelScale, SaveOptions, SeeingBuilder, Star,
+    Telescope,
 };
 use skyangle::SkyAngle;
 
@@ -40,9 +41,11 @@ fn main() -> anyhow::Result<()> {
         .photometry("J")
         .objects(asterism)
         .seeing_limited(ngao)
-        .lufn(f64::cbrt)
         .build();
-    ao_field.save(path.join("wide-field_ngao-image.png"), None)?;
+    ao_field.save(
+        path.join("wide-field_ngao-image.png"),
+        SaveOptions::new().lufn(f64::cbrt),
+    )?;
 
     Ok(())
 }

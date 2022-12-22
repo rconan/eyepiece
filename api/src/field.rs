@@ -1,6 +1,5 @@
 mod field;
-
-pub use field::Field;
+pub use field::{Field, Saturation, SaveOptions};
 mod pixel_scale;
 pub use pixel_scale::PixelScale;
 mod field_of_view;

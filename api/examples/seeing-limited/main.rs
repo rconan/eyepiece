@@ -19,6 +19,6 @@ fn main() -> anyhow::Result<()> {
         .seeing_limited(SeeingBuilder::new(16e-2).zenith_angle(SkyAngle::Degree(30.)))
         .flux(1f64)
         .build();
-    field.save(path.join("seeing-limited_VRIJHK.png"), None)?;
+    field.save(path.join("seeing-limited_VRIJHK.png"), Default::default())?;
     Ok(())
 }

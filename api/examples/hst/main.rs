@@ -18,6 +18,6 @@ fn main() -> anyhow::Result<()> {
         .photometry("K")
         .build();
     println!("{field}");
-    field.save(path.join("image.png"), None)?;
+    field.save(path.join("image.png"), Default::default())?;
     Ok(())
 }

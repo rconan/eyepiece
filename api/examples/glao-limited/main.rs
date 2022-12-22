@@ -25,6 +25,6 @@ fn main() -> anyhow::Result<()> {
         seeing,
     )
         .build();
-    field.save(path.join("glao-limited.png"), None)?;
+    field.save(path.join("glao-limited.png"), Default::default())?;
     Ok(())
 }

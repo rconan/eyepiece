@@ -143,7 +143,7 @@ impl Mast {
             .await?
             .json()
             .await?;
-        println!("Query status: {:#}", response["status"]);
+        println!("MAST query status: {:#}", response["status"]);
 
         let objects: Vec<MastObject> = serde_json::from_value(response["data"].clone())?;
         Ok(MastObjects {
