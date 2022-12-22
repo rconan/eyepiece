@@ -1,7 +1,7 @@
 use std::{env, path::Path};
 
 use eyepiece::{
-    Builder, FieldBuilder, PixelScale, SeeingBuilder, SeeingLimitedField, Star, Telescope,
+    AdaptiveOptics, Builder, Field, FieldBuilder, PixelScale, SeeingBuilder, Star, Telescope,
 };
 use skyangle::SkyAngle;
 
@@ -34,15 +34,13 @@ fn main() -> anyhow::Result<()> {
         .zenith_angle(SkyAngle::Degree(30.))
         .ngao(0.8, Some(asterism[1]));
 
-    let mut ao_field: SeeingLimitedField<Telescope> = (
-        FieldBuilder::new(tel)
-            .pixel_scale(PixelScale::Nyquist(1))
-            .field_of_view(SkyAngle::Arcsecond(12f64))
-            .photometry("J")
-            .objects(asterism)
-            .lufn(f64::cbrt),
-        ngao,
-    )
+    let mut ao_field: Field<Telescope, AdaptiveOptics> = FieldBuilder::new(tel)
+        .pixel_scale(PixelScale::Nyquist(1))
+        .field_of_view(SkyAngle::Arcsecond(12f64))
+        .photometry("J")
+        .objects(asterism)
+        .seeing_limited(ngao)
+        .lufn(f64::cbrt)
         .build();
     ao_field.save(path.join("wide-field_ngao-image.png"), None)?;
 

@@ -14,3 +14,7 @@ keywords = ["telescope", "astronomy"]
 
 [workspace.dependencies]
 skyangle = "0.2.0"
+num-complex = "0.4.2"
+indicatif = "0.17.2"
+anyhow = "1.0.66"
+serde = { version = "1.0.151", features = ["derive"] }

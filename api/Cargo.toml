@@ -12,13 +12,13 @@ categories.workspace = true
 keywords.workspace = true
 
 [dependencies]
-anyhow = "1.0.66"
+anyhow.workspace = true
 colorous = "1.0.8"
 geotrans = "0.2.2"
 image = "0.24.5"
-indicatif = "0.17.2"
+indicatif.workspace = true
 log = "0.4.17"
-num-complex = "0.4.2"
+num-complex.workspace = true
 num-traits = "0.2.15"
 rand = "0.8.5"
 rand_distr = "0.4.3"

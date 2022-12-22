@@ -1,9 +1,9 @@
 use std::{env, path::Path};
 
 use eyepiece::{
-    Builder, FieldBuilder, PixelScale, SeeingBuilder, SeeingLimitedField, Star, Telescope,
+    AdaptiveOptics, Builder, Field, FieldBuilder, PixelScale, SeeingBuilder, Star, Telescope,
 };
-use indicatif::MultiProgress;
+use indicatif::ProgressBar;
 use skyangle::SkyAngle;
 
 fn main() -> anyhow::Result<()> {
@@ -30,22 +30,24 @@ fn main() -> anyhow::Result<()> {
         let star = Star::new((SkyAngle::Arcsecond(r * c), SkyAngle::Arcsecond(r * s)));
         asterism.push(star);
     }
+    let n_star = asterism.len();
 
     let ltao = SeeingBuilder::new(16e-2)
         .zenith_angle(SkyAngle::Degree(30.))
         .ltao(0.5, SkyAngle::Arcsecond(1.));
 
-    let mut ao_field: SeeingLimitedField<Telescope> = (
-        FieldBuilder::new(tel)
-            .pixel_scale(PixelScale::Nyquist(1))
-            .field_of_view(SkyAngle::Arcsecond(20f64))
-            .photometry("I")
-            .objects(asterism)
-            .lufn(f64::cbrt),
-        ltao,
-    )
+    let mut ao_field: Field<Telescope, AdaptiveOptics> = FieldBuilder::new(tel)
+        .pixel_scale(PixelScale::Nyquist(1))
+        .field_of_view(SkyAngle::Arcsecond(20f64))
+        .photometry("I")
+        .objects(asterism)
+        .seeing_limited(ltao)
+        .lufn(f64::cbrt)
         .build();
-    ao_field.save(path.join("ltao-image.png"), Some(MultiProgress::new()))?;
+    ao_field.save(
+        path.join("ltao-image.png"),
+        Some(ProgressBar::new(n_star as u64)),
+    )?;
 
     Ok(())
 }
