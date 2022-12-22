@@ -21,7 +21,7 @@ impl<T: Observer> Builder<PolychromaticField<T>> for FieldBuilder<T> {
 }
 impl<T> PolychromaticField<T>
 where
-    T: Observer,
+    T: Observer + Sync + Send,
 {
     /// Return the # of monochromatic filters
     pub fn len(&self) -> usize {

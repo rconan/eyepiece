@@ -22,6 +22,10 @@ num-complex.workspace = true
 eyepiece = { version = "0.4.0", path = "../api" }
 anyhow.workspace = true
 indicatif.workspace = true
+env_logger.workspace = true
 
 [dev-dependencies]
 tokio-test = "0.4.2"
+
+[features]
+parallel = ["eyepiece/parallel"]

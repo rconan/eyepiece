@@ -42,6 +42,7 @@ impl<M: SeeingModes> Observing<M> {
 
 pub trait Intensity {
     fn init_fft(&mut self, n_dft: usize, pupil_resolution: f64);
+    fn clone(&self) -> Self;
     fn intensity(
         &mut self,
         pupil: Vec<Complex<f64>>,
@@ -50,6 +51,10 @@ pub trait Intensity {
     ) -> Option<Vec<f64>>;
 }
 impl Intensity for Observing<DiffractionLimited> {
+    fn init_fft(&mut self, n_dft: usize, _pupil_resolution: f64) {
+        self.fft = Some(ZpDft::forward(n_dft));
+    }
+
     fn intensity(
         &mut self,
         pupil: Vec<Complex<f64>>,
@@ -67,8 +72,8 @@ impl Intensity for Observing<DiffractionLimited> {
         })
     }
 
-    fn init_fft(&mut self, n_dft: usize, _pupil_resolution: f64) {
-        self.fft = Some(ZpDft::forward(n_dft));
+    fn clone(&self) -> Observing<DiffractionLimited> {
+        Self::diffraction_limited()
     }
 }
 impl Intensity for Observing<SeeingLimited> {
@@ -120,6 +125,10 @@ impl Intensity for Observing<SeeingLimited> {
                     .resize(intensity_sampling)
                     .norm()
             })
+    }
+
+    fn clone(&self) -> Self {
+        Self::seeing_limited(self.seeing.clone())
     }
 }
 impl Intensity for Observing<AdaptiveOptics> {
@@ -191,5 +200,9 @@ impl Intensity for Observing<AdaptiveOptics> {
                         .norm()
                 },
             )
+    }
+
+    fn clone(&self) -> Self {
+        Self::seeing_limited(self.seeing.clone())
     }
 }

@@ -56,7 +56,10 @@ impl<T: Observer> Builder<SeeingLimitedField<T>> for (FieldBuilder<T>, SeeingBui
         ))
     }
 }
-impl<T: Observer> SeeingLimitedField<T> {
+impl<T> SeeingLimitedField<T>
+where
+    T: Observer + Sync + Send,
+{
     /// Return the # of seeing conditions
     pub fn len(&self) -> usize {
         self.seeing_builders.len()

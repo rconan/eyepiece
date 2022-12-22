@@ -7,7 +7,9 @@ use skyangle::SkyAngle;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let fov_arcmin = 1.;
+    env_logger::init();
+
+    let fov_arcmin = 3.;
     let mast = Mast::new("J");
     let objects = mast
         .query_region("NGC 6405", SkyAngle::Arcminute(fov_arcmin))
@@ -23,7 +25,7 @@ async fn main() -> anyhow::Result<()> {
         .photometry("J")
         .objects(objects)
         .seeing_limited(SeeingBuilder::new(16e-2).zenith_angle(SkyAngle::Degree(30.)))
-        // .lufn(f64::cbrt)
+        .photon_noise()
         .build();
 
     let style = "[{eta:>4}] {bar:40.cyan/blue} {pos:>5}/{len:5}";
@@ -31,9 +33,7 @@ async fn main() -> anyhow::Result<()> {
     bar.set_style(ProgressStyle::with_template(&format!("{}", style)).unwrap());
     field.save(
         "image.png",
-        SaveOptions::new()
-            .saturation(Saturation::LogSigma(3f64))
-            .progress(bar),
+        SaveOptions::new().saturation(Saturation::LogSigma(3f64)), // .progress(bar),
     )?;
     Ok(())
 }
