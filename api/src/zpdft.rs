@@ -122,6 +122,9 @@ impl ZpDft {
             self.zero_padded_buffer.as_mut_slice(),
             self.scratch.as_mut_slice(),
         );
+        self.zero_padded_buffer
+            .iter_mut()
+            .for_each(|buffer| *buffer /= self.len as f64);
         self
     }
     /// FFT buffer real part

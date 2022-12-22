@@ -1,6 +1,12 @@
+use std::{env, path::Path};
+
 use eyepiece::{Builder, Field, FieldBuilder, Jwst, Observer, PixelScale};
 
 fn main() -> anyhow::Result<()> {
+    let path = Path::new(&env::var("CARGO_MANIFEST_DIR")?)
+        .join("examples")
+        .join("jwst");
+
     let jwst = Jwst::new();
     jwst.show_pupil(None)?;
     let mut field: Field<Jwst> = FieldBuilder::new(jwst)
@@ -8,6 +14,6 @@ fn main() -> anyhow::Result<()> {
         .field_of_view(41)
         .build();
     println!("{field}");
-    field.save("image.png", Default::default())?;
+    field.save(path.join("image.png"), Default::default())?;
     Ok(())
 }

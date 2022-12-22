@@ -119,9 +119,6 @@ impl Intensity for Observing<SeeingLimited> {
                     .shift()
                     .resize(intensity_sampling)
                     .norm()
-                    .into_iter()
-                    .map(|x| x / zp_dft.len().pow(2) as f64)
-                    .collect()
             })
     }
 }
@@ -192,9 +189,6 @@ impl Intensity for Observing<AdaptiveOptics> {
                         .shift()
                         .resize(intensity_sampling)
                         .norm()
-                        .into_iter()
-                        .map(|x| x / zp_dft.len().pow(2) as f64)
-                        .collect()
                 },
             )
     }
