@@ -19,7 +19,7 @@ skyangle.workspace = true
 thiserror = "1.0.38"
 tokio = { version = "1.23.0", features = ["full"] }
 num-complex.workspace = true
-eyepiece = { version = "0.4.0", path = "../api" }
+eyepiece = { path = "../api" }
 anyhow.workspace = true
 indicatif.workspace = true
 env_logger.workspace = true
