@@ -7,7 +7,7 @@ use skyangle::{Conversion, SkyAngle};
 use crate::GaiaPhotometry;
 
 /// MAST query data object
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, PartialOrd)]
 pub struct MastObject {
     #[serde(rename = "GAIAmag")]
     pub(crate) gaimag: Option<f64>,

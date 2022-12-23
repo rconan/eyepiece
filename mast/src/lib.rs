@@ -10,7 +10,7 @@
 //! use mast_eyepiece::Mast;
 //! use skyangle::SkyAngle;
 //!
-//! let mast = Mast::new();
+//! let mast = Mast::new("J");
 //! let mut objects = mast
 //!     .query_region("NGC 6405", SkyAngle::Arcminute(1.))
 //!     .await

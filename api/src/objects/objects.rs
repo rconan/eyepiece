@@ -42,6 +42,28 @@ impl Star {
 #[derive(Debug, Clone)]
 /// A collection of stars
 pub struct Objects(pub(super) Vec<Star>);
+impl Objects {
+    /// Returns the brightest star
+    pub fn brightest(&self) -> Star {
+        let mut objects = self.0.clone();
+        objects.sort_by(|a, b| {
+            let ma = a.magnitude;
+            let mb = b.magnitude;
+            ma.partial_cmp(&mb).unwrap()
+        });
+        objects[0].clone()
+    }
+    /// Returns the faintest star
+    pub fn faintest(&self) -> Star {
+        let mut objects = self.0.clone();
+        objects.sort_by(|a, b| {
+            let ma = a.magnitude;
+            let mb = b.magnitude;
+            mb.partial_cmp(&ma).unwrap()
+        });
+        objects[0].clone()
+    }
+}
 impl Deref for Objects {
     type Target = Vec<Star>;
 
