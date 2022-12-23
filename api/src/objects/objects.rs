@@ -1,5 +1,8 @@
-use skyangle::SkyAngle;
-use std::ops::{Deref, DerefMut};
+use skyangle::{Conversion, SkyAngle};
+use std::{
+    fmt::Display,
+    ops::{Deref, DerefMut},
+};
 
 type SkyCoordinates = (SkyAngle<f64>, SkyAngle<f64>);
 
@@ -8,6 +11,12 @@ type SkyCoordinates = (SkyAngle<f64>, SkyAngle<f64>);
 pub struct Star {
     pub coordinates: SkyCoordinates,
     pub magnitude: f64,
+}
+impl Star {
+    pub fn distance(&self) -> f64 {
+        let (x, y) = self.coordinates;
+        x.to_radians().hypot(y.to_radians())
+    }
 }
 impl Star {
     pub fn inside_box(&self, width: f64) -> bool {
@@ -62,6 +71,36 @@ impl Objects {
             mb.partial_cmp(&ma).unwrap()
         });
         objects[0].clone()
+    }
+    /// Returns the star the closed to the optical axis
+    pub fn closest(&self) -> Star {
+        let mut objects = self.0.clone();
+        objects.sort_by(|a, b| a.distance().partial_cmp(&b.distance()).unwrap());
+        objects[0].clone()
+    }
+    /// Returns the star the furthest to the optical axis
+    pub fn furthest(&self) -> Star {
+        let mut objects = self.0.clone();
+        objects.sort_by(|a, b| b.distance().partial_cmp(&a.distance()).unwrap());
+        objects[0].clone()
+    }
+}
+impl Display for Objects {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "{} stars", self.len())?;
+        writeln!(
+            f,
+            " . magnitudes {:.3?}",
+            (self.brightest().magnitude, self.faintest().magnitude)
+        )?;
+        writeln!(
+            f,
+            " . distances {:.3?}arcsec",
+            (
+                self.closest().distance().to_arcsec(),
+                self.furthest().distance().to_arcsec()
+            )
+        )
     }
 }
 impl Deref for Objects {

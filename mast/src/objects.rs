@@ -36,8 +36,8 @@ pub struct MastObjects {
 impl Display for MastObjects {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "{}", self.target.to_uppercase())?;
-        writeln!(f, " . (ra,dec) degree: {:?}", self.origin)?;
-        writeln!(f, " . radius: {:}arcmin", self.radius.to_arcmin())?;
+        writeln!(f, " . (ra,dec) degree: {:.3?}", self.origin)?;
+        writeln!(f, " . radius: {:.3}arcmin", self.radius.to_arcmin())?;
         writeln!(f, " . {:} stars", self.objects.len())
     }
 }

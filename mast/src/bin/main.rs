@@ -10,20 +10,21 @@ use skyangle::SkyAngle;
 async fn main() -> anyhow::Result<()> {
     env_logger::init();
 
-    let object_id = "NGC3532";
+    let object_id = "M15";
     let fov_arcmin = 20. / 60.;
     // let px_scale_arcsec = 0.1;
     let band = "J";
 
     let mast = Mast::new(band);
     let objects = mast
-        .query_region(object_id, SkyAngle::Arcminute(fov_arcmin))
+        .query_region(object_id, SkyAngle::Arcminute(fov_arcmin / 2.))
         .await
         .unwrap();
     println!("{objects}");
     let n_star = objects.len();
 
     let stars: eyepiece::Objects = objects.into();
+    println!("{stars}");
     let guide_star = stars.brightest();
     println!("Guide star: {:?}", guide_star);
 
@@ -36,6 +37,7 @@ async fn main() -> anyhow::Result<()> {
         .seeing_limited(
             SeeingBuilder::new(16e-2)
                 .zenith_angle(SkyAngle::Degree(30.))
+                .glao(0.2)
                 .ngao(0.5, Some(guide_star)),
         )
         // .photon_noise()
@@ -48,13 +50,13 @@ async fn main() -> anyhow::Result<()> {
     field.save(
         format!(
             "{}_{}_{:.0}fov_{:}.png",
-            object_id,
+            object_id.replace(' ', ""),
             band,
             fov_arcmin * 60.,
-            "nyquist"
+            "nyquist_ngao"
         ),
         SaveOptions::new()
-            .lufn(f64::asinh)
+            .lufn(f64::cbrt)
             // .saturation(Saturation::LogSigma(3f64))
             .progress(bar),
     )?;
