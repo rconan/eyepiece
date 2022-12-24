@@ -25,7 +25,7 @@
 //! field.save("field.png", Default::default()).unwrap();
 //! ```
 //!
-//! More examples can be found [here](https://github.com/rconan/eyepiece/tree/main/examples)
+//! More examples can be found [here](https://github.com/rconan/eyepiece/tree/main/api/examples)
 
 use std::path::Path;
 
