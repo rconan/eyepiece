@@ -1,4 +1,4 @@
-use std::ops::Deref;
+use std::{fmt::Display, ops::Deref};
 
 mod generic;
 pub use generic::{Telescope, TelescopeBuilder};
@@ -34,5 +34,16 @@ impl Observer for Hst {
 
     fn inside_pupil(&self, x: f64, y: f64) -> bool {
         self.0.inside_pupil(x, y)
+    }
+}
+impl Display for Hst {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "HST: {}m diameter ({}m diameter obscuration), {:.3}m^2 collection area",
+            self.diameter,
+            self.obscuration.unwrap(),
+            self.area()
+        )
     }
 }

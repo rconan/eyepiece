@@ -13,7 +13,7 @@ categories = ["science", "simulation"]
 keywords = ["telescope", "astronomy"]
 
 [workspace.dependencies]
-skyangle = "0.2.1"
+skyangle = { version = "0.2.2", path = "../skyangle" }
 num-complex = "0.4.2"
 indicatif = "0.17.2"
 anyhow = "1.0.66"

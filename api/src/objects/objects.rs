@@ -1,3 +1,4 @@
+use serde::Serialize;
 use skyangle::{Conversion, SkyAngle};
 use std::{
     fmt::Display,
@@ -7,10 +8,22 @@ use std::{
 type SkyCoordinates = (SkyAngle<f64>, SkyAngle<f64>);
 
 /// A star object
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize)]
 pub struct Star {
     pub coordinates: SkyCoordinates,
     pub magnitude: f64,
+}
+impl Display for Star {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let (x, y) = self.coordinates;
+        write!(
+            f,
+            "star @({:.3},{:.3})arsec with {:.3} magnitude",
+            x.into_arcsec().into_value(),
+            y.into_arcsec().into_value(),
+            self.magnitude
+        )
+    }
 }
 impl Star {
     pub fn distance(&self) -> f64 {
@@ -48,7 +61,7 @@ impl Star {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 /// A collection of stars
 pub struct Objects(pub(super) Vec<Star>);
 impl Objects {
@@ -130,5 +143,10 @@ impl From<Star> for Objects {
 impl From<Vec<Star>> for Objects {
     fn from(stars: Vec<Star>) -> Self {
         Self(stars)
+    }
+}
+impl From<&Objects> for Objects {
+    fn from(stars: &Objects) -> Self {
+        Self(stars.iter().cloned().collect())
     }
 }

@@ -1,10 +1,4 @@
-use std::{env, time::Instant};
-
-use rand_distr::{Cauchy, Distribution, Uniform};
-use rand_seeder::{Seeder, SipRng};
-use skyangle::SkyAngle;
-
-use super::{Objects, Star};
+use super::*;
 
 /// Spatial distribution of stars
 ///
@@ -60,6 +54,12 @@ pub enum StarDistribution {
         center: Option<(SkyAngle<f64>, SkyAngle<f64>)>,
         scale: SkyAngle<f64>,
         n_sample: usize,
+    },
+    GlobularBoxed {
+        center: Option<(SkyAngle<f64>, SkyAngle<f64>)>,
+        scale: SkyAngle<f64>,
+        n_sample: usize,
+        width: SkyAngle<f64>,
     },
 }
 impl From<&StarDistribution> for Objects {
@@ -123,6 +123,33 @@ impl From<&StarDistribution> for Objects {
                     let (so, co) = o.sin_cos();
                     let (x, y) = (cx + r * co, cy + r * so);
                     stars.push(Star::new((SkyAngle::Radian(x), SkyAngle::Radian(y))));
+                }
+                stars.into()
+            }
+            StarDistribution::GlobularBoxed {
+                center,
+                scale,
+                n_sample,
+                width,
+            } => {
+                let (cx, cy) =
+                    center.map_or((0f64, 0f64), |(x, y)| (x.to_radians(), y.to_radians()));
+                let radius = Cauchy::new(0f64, scale.to_radians()).unwrap();
+                let azimuth = Uniform::new(0f64, 2. * std::f64::consts::PI);
+                let mut stars = vec![];
+                let h = *width / 2.;
+                loop {
+                    let r = radius.sample(&mut rng);
+                    let o = azimuth.sample(&mut rng);
+                    let (so, co) = o.sin_cos();
+                    let (x, y) = (cx + r * co, cy + r * so);
+                    if x.abs() > h || y.abs() > h {
+                        continue;
+                    }
+                    stars.push(Star::new((SkyAngle::Radian(x), SkyAngle::Radian(y))));
+                    if stars.len() == *n_sample {
+                        break;
+                    }
                 }
                 stars.into()
             }

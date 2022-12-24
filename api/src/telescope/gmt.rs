@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use crate::Observer;
 use geotrans::{Conic, Segment, SegmentTrait, Transform, M1};
 
@@ -12,7 +14,16 @@ impl Gmt {
         Self
     }
 }
-
+impl Display for Gmt {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "GMT: {}m diameter, {:.3}m^2 collection area",
+            self.diameter(),
+            self.area()
+        )
+    }
+}
 impl Observer for Gmt {
     fn diameter(&self) -> f64 {
         25.5

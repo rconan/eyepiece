@@ -1,10 +1,4 @@
-use std::{env, time::Instant};
-
-use rand::Rng;
-use rand_distr::Normal;
-use rand_seeder::{Seeder, SipRng};
-
-use super::{Objects, StarDistribution};
+use super::*;
 
 /// Star magnitude distribution
 pub enum MagnitudeDistribution {

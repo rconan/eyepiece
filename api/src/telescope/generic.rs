@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use crate::Observer;
 
 /// Generic circular telescope
@@ -11,7 +13,7 @@ use crate::Observer;
 pub struct Telescope {
     /// Primary mirror diameter D (Nyquist sampling criteria: λ/2D)
     pub diameter: f64,
-    obscuration: Option<f64>,
+    pub obscuration: Option<f64>,
 }
 
 impl Default for Telescope {
@@ -19,6 +21,26 @@ impl Default for Telescope {
         Self {
             diameter: 1f64,
             obscuration: Default::default(),
+        }
+    }
+}
+impl Display for Telescope {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if let Some(obscuration) = self.obscuration {
+            write!(
+                f,
+                "Telescope: {}m diameter ({}m diameter obscuration), {:.3}m^2 collection area",
+                self.diameter,
+                obscuration,
+                self.area()
+            )
+        } else {
+            write!(
+                f,
+                "Telescope: {}m diameter, {:.3}m^2 collection area",
+                self.diameter,
+                self.area()
+            )
         }
     }
 }

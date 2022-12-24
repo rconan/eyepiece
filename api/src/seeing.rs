@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use skyangle::SkyAngle;
 
 use crate::{AdaptiveOpticsCorrection, Photometry, Star};
@@ -18,6 +20,17 @@ pub struct SeeingBuilder {
     pub fried_parameter: f64,
     pub outer_scale: f64,
     pub adaptive_optics: Option<AdaptiveOpticsCorrection>,
+}
+impl Display for SeeingBuilder {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "seeing limited:")?;
+        writeln!(f, " . Fried parameter: {:.3}cm", self.fried_parameter * 1e2)?;
+        writeln!(f, " . outer scale: {:.3}m", self.outer_scale)?;
+        if let Some(ao) = &self.adaptive_optics {
+            write!(f, r" . with {}", ao)?;
+        }
+        Ok(())
+    }
 }
 impl SeeingBuilder {
     /// Creates a new atmospheric seeing builder by setting the Fried parameter in meters
@@ -61,7 +74,7 @@ impl SeeingBuilder {
         let photometry: Photometry = band.into();
         Self {
             fried_parameter: self.fried_parameter
-                * (photometry.wavelength / 0.5e-6_f64).powf(1.2_f64),
+                * (photometry.wavelength / Photometry::from("V").wavelength).powf(1.2_f64),
             ..self
         }
     }

@@ -1,6 +1,5 @@
 use image::{ImageResult, Rgb, RgbImage};
 use indicatif::{MultiProgress, ProgressBar};
-use rand_distr::{Distribution, Poisson};
 use skyangle::Conversion;
 use std::{fmt::Display, fs::File, path::Path};
 
@@ -25,7 +24,7 @@ where
     pub(super) observing_mode: Observing<Mode>,
     pub(super) flux: Option<f64>,
 }
-impl<T: Observer> Display for Field<T> {
+impl<T: Observer + Display, Mode> Display for Field<T, Mode> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "Field in {} band", self.photometry)?;
         writeln!(f, " . pixel scale: {:.3}mas", self.resolution().to_mas())?;
@@ -34,7 +33,8 @@ impl<T: Observer> Display for Field<T> {
             " . field-of-view: {:.3}arcsec",
             self.field_of_view.get(self).to_arcsec()
         )?;
-        writeln!(f, " . pupil area: {:.3}m^2", self.observer.area())?;
+        writeln!(f, " . {}", self.observer)?;
+        write!(f, " . {}", self.observing_mode)?;
         // if let Some(seeing) = self.seeing() {
         //     writeln!(f, " . seeing: {:.3}arcsec", seeing.to_arcsec())?;
         // }
@@ -166,309 +166,6 @@ where
         self.field_of_view.get(self)
     }
 }
-#[cfg(not(feature = "parallel"))]
-impl<T, Mode> Field<T, Mode>
-where
-    T: Observer,
-    Mode: Send,
-    Observing<Mode>: Intensity,
-{
-    /// Computes field-of-view intensity map
-    pub fn intensity(&mut self, bar: Option<ProgressBar>) -> Vec<f64> {
-        // Telescope Nyquist-Shannon sampling criteria
-        // let nyquist = 0.5 * self.photometry.wavelength / self.observer.diameter();
-        // Image resolution to sampling criteria ratio
-        let b = self
-            .pixel_scale
-            .to_nyquist_clamped_ratio(&self.observer, &self.photometry);
-        // Intensity sampling (oversampled wrt. image by factor b>=1)
-        let intensity_sampling = (b * self.field_of_view.to_pixelscale_ratio(self)).ceil() as usize;
-        // Pupil size according to intensity angular resolution
-        let pupil_size = b * self.photometry.wavelength / self.resolution();
-        // FFT sampling based on pupil spatial resolution
-        let mut n_dft = (pupil_size / self.observer.resolution()).ceil() as usize;
-        // Match parity of FFT and intensity sampling if the latter is larger
-        if intensity_sampling > n_dft && intensity_sampling % 2 != n_dft % 2 {
-            n_dft += 1;
-        }
-        log::debug!(
-            r"
- . Image sampling: {intensity_sampling}:{b}
- . Pupil size    : {pupil_size:.3}m
- . DFT sampling  : {n_dft}
-         "
-        );
-        // Zero-padding discrete Fourier transform
-        self.observing_mode
-            .init_fft(n_dft, self.observer.resolution());
-
-        // star image stacking buffer
-        let mut buffer = vec![0f64; intensity_sampling.pow(2)];
-        let n = intensity_sampling as i32;
-        let alpha = self.resolution() / b;
-        let mut rng = rand::thread_rng();
-        for star in self.objects.iter() {
-            bar.as_ref().map(|b| b.inc(1));
-            // todo: check if star is within FOV (rejection criteria?)
-            if !star.inside_box(self.field_of_view() + self.resolution() * 2.) {
-                continue;
-            }
-            let n_photon = self.flux.unwrap_or(
-                self.photometry.n_photon(star.magnitude)
-                    * self.exposure
-                    * self.observer.resolution().powi(2), //  * self.observer.area() ,
-            );
-            // star coordinates
-            let (x, y) = star.coordinates;
-            // integer part
-            let x0 = -(y / alpha).round();
-            let y0 = (x / alpha).round();
-            // fractional part
-            let fr_x0 = -y.to_radians() - x0 * alpha;
-            let fr_y0 = x.to_radians() - y0 * alpha;
-            // image fractional translation by Fourier interpolation
-            let shift = if intensity_sampling % 2 == 0 {
-                Some((
-                    0.5 / pupil_size + fr_x0 / self.photometry.wavelength,
-                    0.5 / pupil_size + fr_y0 / self.photometry.wavelength,
-                ))
-            } else {
-                Some((
-                    fr_x0 / self.photometry.wavelength,
-                    fr_y0 / self.photometry.wavelength,
-                ))
-            };
-            // star intensity map
-            let mut pupil = self.observer.pupil(shift);
-            pupil.iter_mut().for_each(|p| *p *= n_photon.sqrt());
-            let mut intensity = self
-                .observing_mode
-                .intensity(pupil, intensity_sampling, star)
-                .unwrap();
-            // intensity set to # of photon & Poisson noise
-            // log::debug!("Image flux: {n_photon}");
-            if self.poisson_noise {
-                intensity.iter_mut().for_each(|i| {
-                    if *i == 0f64 {
-                        *i = 0f64;
-                    } else {
-                        let poi = Poisson::new(*i).unwrap();
-                        *i = poi.sample(&mut rng)
-                    }
-                })
-            };
-            // shift and add star images
-            let i0 = x0 as i32;
-            let j0 = y0 as i32;
-            for i in 0..n {
-                let ii = i0 + i;
-                if ii < 0 || ii >= n {
-                    continue;
-                }
-                for j in 0..n {
-                    let jj = j0 + j;
-                    if jj < 0 || jj >= n {
-                        continue;
-                    }
-                    let k = i * n + j;
-                    let kk = ii * n + jj;
-                    buffer[kk as usize] += intensity[k as usize];
-                }
-            }
-        }
-        bar.as_ref().map(|b| b.finish());
-
-        let m = b as usize;
-        if m == 1 {
-            return buffer;
-        }
-        // binning
-        let n = intensity_sampling / m;
-        let mut image = vec![0f64; n * n];
-        for i in 0..n {
-            let ii = i * m;
-            for j in 0..n {
-                let jj = j * m;
-                let mut bin = 0f64;
-                for ib in 0..m {
-                    for jb in 0..m {
-                        let kk = (ii + ib) * intensity_sampling + jj + jb;
-                        bin += buffer[kk];
-                    }
-                }
-                let k = i * n + j;
-                image[k] = bin;
-            }
-        }
-        image
-    }
-}
-#[cfg(feature = "parallel")]
-impl<T, Mode> Field<T, Mode>
-where
-    T: Observer + Sync + Send,
-    Mode: Send,
-    Observing<Mode>: Intensity,
-{
-    /// Computes field-of-view intensity map
-    pub fn intensity(&mut self, bar: Option<ProgressBar>) -> Vec<f64> {
-        // Telescope Nyquist-Shannon sampling criteria
-        // let nyquist = 0.5 * self.photometry.wavelength / self.observer.diameter();
-        // Image resolution to sampling criteria ratio
-        let b = self
-            .pixel_scale
-            .to_nyquist_clamped_ratio(&self.observer, &self.photometry);
-        // Intensity sampling (oversampled wrt. image by factor b>=1)
-        let intensity_sampling = (b * self.field_of_view.to_pixelscale_ratio(self)).ceil() as usize;
-        // Pupil size according to intensity angular resolution
-        let pupil_size = b * self.photometry.wavelength / self.resolution();
-        // FFT sampling based on pupil spatial resolution
-        let mut n_dft = (pupil_size / self.observer.resolution()).ceil() as usize;
-        // Match parity of FFT and intensity sampling if the latter is larger
-        if intensity_sampling > n_dft && intensity_sampling % 2 != n_dft % 2 {
-            n_dft += 1;
-        }
-        log::debug!(
-            r"
- . Image sampling: {intensity_sampling}:{b}
- . Pupil size    : {pupil_size:.3}m
- . DFT sampling  : {n_dft}
-         "
-        );
-        // Zero-padding discrete Fourier transform
-        self.observing_mode
-            .init_fft(n_dft, self.observer.resolution());
-
-        // star image stacking buffer
-        let mut buffer = vec![0f64; intensity_sampling.pow(2)];
-        let n = intensity_sampling as i32;
-        let alpha = self.resolution() / b;
-
-        let n_threads = num_cpus::get();
-        log::info!("Computing intensity in parallel using {n_threads} threads");
-        for star_chunk in self.objects.chunks(n_threads) {
-            let intensities: Vec<_> = std::thread::scope(|s| {
-                log::info!("starting intensity batch");
-                let mut intensity_scope = vec![];
-                for star in star_chunk {
-                    bar.as_ref().map(|b| b.inc(1));
-                    // todo: check if star is within FOV (rejection criteria?)
-                    if !star.inside_box(self.field_of_view() + self.resolution() * 2.) {
-                        continue;
-                    }
-
-                    let n_photon = self.flux.unwrap_or(
-                        self.photometry.n_photon(star.magnitude)
-                            * self.exposure
-                            * self.observer.resolution().powi(2), //  * self.observer.area() ,
-                    );
-                    // star coordinates
-                    let (x, y) = star.coordinates;
-                    // integer part
-                    let x0 = -(y / alpha).round();
-                    let y0 = (x / alpha).round();
-                    // fractional part
-                    let fr_x0 = -y.to_radians() - x0 * alpha;
-                    let fr_y0 = x.to_radians() - y0 * alpha;
-                    // image fractional translation by Fourier interpolation
-                    let shift = if intensity_sampling % 2 == 0 {
-                        Some((
-                            0.5 / pupil_size + fr_x0 / self.photometry.wavelength,
-                            0.5 / pupil_size + fr_y0 / self.photometry.wavelength,
-                        ))
-                    } else {
-                        Some((
-                            fr_x0 / self.photometry.wavelength,
-                            fr_y0 / self.photometry.wavelength,
-                        ))
-                    };
-                    let mut observing_mode = self.observing_mode.clone();
-
-                    let pupil_resolution = self.observer.resolution();
-                    let mut pupil = self.observer.pupil(shift);
-                    pupil.iter_mut().for_each(|p| *p *= n_photon.sqrt());
-
-                    let poisson_noise = self.poisson_noise;
-
-                    let intensity_thread = s.spawn(move || {
-                        let mut rng = rand::thread_rng();
-                        // star intensity map
-                        // Zero-padding discrete Fourier transform
-                        observing_mode.init_fft(n_dft, pupil_resolution);
-                        let mut intensity = observing_mode
-                            .intensity(pupil, intensity_sampling, star)
-                            .unwrap();
-                        // intensity set to # of photon & Poisson noise
-                        // log::debug!("Image flux: {n_photon}");
-                        if poisson_noise {
-                            intensity.iter_mut().for_each(|i| {
-                                if *i == 0f64 {
-                                    *i = 0f64;
-                                } else {
-                                    let poi = Poisson::new(*i).unwrap();
-                                    *i = poi.sample(&mut rng)
-                                }
-                            })
-                        };
-                        (x0, y0, intensity)
-                    });
-                    intensity_scope.push(intensity_thread);
-                }
-                intensity_scope
-                    .into_iter()
-                    .map(|intensity_thread| intensity_thread.join().unwrap())
-                    .collect()
-            });
-
-            log::info!("star images shift & add");
-            for (x0, y0, intensity) in intensities.into_iter() {
-                // shift and add star images
-                let i0 = x0 as i32;
-                let j0 = y0 as i32;
-                for i in 0..n {
-                    let ii = i0 + i;
-                    if ii < 0 || ii >= n {
-                        continue;
-                    }
-                    for j in 0..n {
-                        let jj = j0 + j;
-                        if jj < 0 || jj >= n {
-                            continue;
-                        }
-                        let k = i * n + j;
-                        let kk = ii * n + jj;
-                        buffer[kk as usize] += intensity[k as usize];
-                    }
-                }
-            }
-        }
-        bar.as_ref().map(|b| b.finish());
-
-        let m = b as usize;
-        if m == 1 {
-            return buffer;
-        }
-        // binning
-        let n = intensity_sampling / m;
-        let mut image = vec![0f64; n * n];
-        for i in 0..n {
-            let ii = i * m;
-            for j in 0..n {
-                let jj = j * m;
-                let mut bin = 0f64;
-                for ib in 0..m {
-                    for jb in 0..m {
-                        let kk = (ii + ib) * intensity_sampling + jj + jb;
-                        bin += buffer[kk];
-                    }
-                }
-                let k = i * n + j;
-                image[k] = bin;
-            }
-        }
-        image
-    }
-}
 impl<T, Mode> Field<T, Mode>
 where
     T: Observer + Sync + Send,
@@ -497,7 +194,7 @@ where
                 intensity.iter_mut().for_each(|i| *i /= threshold);
 
                 let lut = colorous::CUBEHELIX;
-                let n_px = self.field_of_view.to_pixelscale_ratio(self).ceil() as usize;
+                let n_px = (intensity.len() as f64).sqrt() as usize;
                 let mut img = RgbImage::new(n_px as u32, n_px as u32);
                 img.pixels_mut().zip(&intensity).for_each(|(p, i)| {
                     *p = Rgb(lut.eval_continuous(*i).into_array());

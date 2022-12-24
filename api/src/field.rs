@@ -12,6 +12,7 @@ mod seeing_limited;
 pub use seeing_limited::SeeingLimitedField;
 mod observing_mode;
 pub use observing_mode::{Intensity, Observing};
+mod intensity;
 
 /// [FieldBuilder] to [Field] interface
 pub trait Builder<F> {

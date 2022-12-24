@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use num_complex::Complex;
 use num_traits::Zero;
 use skyangle::SkyAngle;
@@ -98,6 +100,19 @@ pub struct AdaptiveOpticsCorrection {
     guide_star: Option<Star>,
     laser_guide_star_radius: Option<SkyAngle<f64>>,
     transfer_function: Option<TransferFunction>,
+}
+impl Display for AdaptiveOpticsCorrection {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "adaptive optics correction")?;
+        writeln!(f, " . Strehl ratio: {:.3}", self.strehl_ratio)?;
+        if let Some(guide_star) = self.guide_star {
+            writeln!(f, " . guide {}", guide_star)?;
+        }
+        if let Some(lgs_radius) = self.laser_guide_star_radius {
+            writeln!(f, " . LGS radius: {}arsec", lgs_radius)?;
+        }
+        Ok(())
+    }
 }
 impl AdaptiveOpticsCorrection {
     pub fn ngao(strehl_ratio: f64, guide_star: Option<Star>) -> Self {

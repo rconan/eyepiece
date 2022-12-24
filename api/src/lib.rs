@@ -27,7 +27,7 @@
 //!
 //! More examples can be found [here](https://github.com/rconan/eyepiece/tree/main/examples)
 
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use image::{ImageResult, Rgb, RgbImage};
 use num_complex::Complex;
@@ -104,7 +104,7 @@ pub trait Observer: Clone {
             * self.resolution().powi(2)
     }
     /// Saves the pupil in an image file
-    fn show_pupil(&self, path: Option<PathBuf>) -> ImageResult<()> {
+    fn show_pupil<P: AsRef<Path>>(&self, path: Option<P>) -> ImageResult<()> {
         let n = (self.diameter() / self.resolution()).round() as u32 + 1;
         let mut img = RgbImage::new(n, n);
         img.pixels_mut()
