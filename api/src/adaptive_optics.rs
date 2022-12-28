@@ -324,7 +324,7 @@ impl AdaptiveOpticsCorrection {
     }
 }
 
-#[cfg(test)]
+/* #[cfg(test)]
 pub mod tests {
     use super::*;
     use crate::atmosphere_transfer_function;
@@ -358,3 +358,4 @@ pub mod tests {
         otf.chunks(n).for_each(|o| println!("{:8.3?}", o));
     } */
 }
+ */

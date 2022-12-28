@@ -6,12 +6,12 @@ use eyepiece::{
 use skyangle::SkyAngle;
 
 fn main() -> anyhow::Result<()> {
-    let path = Path::new(&env::var("CARGO_MANIFEST_DIR")?)
+    let path = Path::new(&env::var("CARGO_MANIFEST_DIR").unwrap_or_default())
         .join("examples")
         .join("seeing-limited");
 
     let tel = Telescope::new(8.).build();
-    tel.show_pupil(None)?;
+    // tel.show_pupil(None)?;
     let mut field: PolychromaticField<Telescope> = FieldBuilder::new(tel)
         .pixel_scale(SkyAngle::Arcsecond(0.01))
         .field_of_view(200)

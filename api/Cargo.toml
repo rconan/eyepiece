@@ -28,11 +28,20 @@ rustfft = "6.1.0"
 serde-pickle = "1.1.1"
 skyangle.workspace = true
 serde.workspace = true
+transpose = "0.2.2"
 
 [dev-dependencies]
 clap = { version = "4.0.32", features = ["derive"] }
 env_logger.workspace = true
 serde-pickle = "1.1.1"
+criterion = "0.4"
 
 [features]
 parallel = []
+
+[[bench]]
+name = "benchmarks"
+harness = false
+
+[profile.release]
+debug = true

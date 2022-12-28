@@ -39,7 +39,7 @@ impl ZpDft {
         self.len as usize
     }
     pub fn reset(&mut self) -> &mut Self {
-        self.zero_padded_buffer = vec![Complex::zero(); (self.len * self.len) as usize];
+        self.zero_padded_buffer.fill(Complex::zero());
         self
     }
     pub fn into_buffer(self) -> Vec<Cpx> {
@@ -82,17 +82,25 @@ impl ZpDft {
     }
     /// Shift zero frequency back to center
     pub fn shift(&mut self) -> &mut Self {
-        let mut buffer: Vec<Cpx> = vec![Complex::zero(); self.zero_padded_buffer.len()];
+        // let mut buffer: Vec<Cpx> = vec![Complex::zero(); self.zero_padded_buffer.len()];
+        self.scratch
+            .resize(self.zero_padded_buffer.len(), Complex::zero());
         for i in 0..self.len {
             let ii = (i + self.len / 2) % self.len;
             for j in 0..self.len {
                 let jj = (j + self.len / 2) % self.len;
                 let k = (i * self.len + j) as usize;
                 let kk = (ii * self.len + jj) as usize;
-                buffer[kk] = self.zero_padded_buffer[k];
+                unsafe {
+                    *self.scratch.get_unchecked_mut(kk) = *self.zero_padded_buffer.get_unchecked(k)
+                }
+                // self.scratch[kk] = self.zero_padded_buffer[k];
             }
         }
-        self.zero_padded_buffer.copy_from_slice(buffer.as_slice());
+        self.zero_padded_buffer
+            .copy_from_slice(&self.scratch.as_slice());
+        self.scratch
+            .resize(self.fft.get_inplace_scratch_len(), Complex::zero());
         self
     }
     pub fn filter(&mut self, kernel: &[Cpx]) -> &mut Self {
@@ -108,16 +116,24 @@ impl ZpDft {
             self.zero_padded_buffer.as_mut_slice(),
             self.scratch.as_mut_slice(),
         );
-        self.zero_padded_buffer = (0..self.len as usize)
-            .flat_map(|k| {
-                self.zero_padded_buffer
-                    .iter()
-                    .skip(k)
-                    .step_by(self.len as usize)
-                    .cloned()
-                    .collect::<Vec<Cpx>>()
-            })
-            .collect();
+        /*         self.zero_padded_buffer = (0..self.len as usize)
+        .flat_map(|k| {
+            self.zero_padded_buffer
+                .iter()
+                .skip(k)
+                .step_by(self.len as usize)
+                .cloned()
+                .collect::<Vec<Cpx>>()
+        })
+        .collect(); */
+        let n = self.len();
+        self.scratch
+            .resize(self.zero_padded_buffer.len(), Complex::zero());
+        transpose::transpose(&mut self.zero_padded_buffer, &mut self.scratch, n, n);
+        self.zero_padded_buffer
+            .copy_from_slice(&self.scratch[..n * n]);
+        self.scratch
+            .resize(self.fft.get_inplace_scratch_len(), Complex::zero());
         self.fft.process_with_scratch(
             self.zero_padded_buffer.as_mut_slice(),
             self.scratch.as_mut_slice(),
@@ -148,7 +164,7 @@ impl ZpDft {
     }
     pub fn crop(&mut self, new_len: usize) -> &mut Self {
         let ij0 = self.len as usize / 2 - new_len / 2;
-        let buffer = self.zero_padded_buffer.clone();
+        /*         let buffer = self.zero_padded_buffer.clone();
         self.zero_padded_buffer = vec![Complex::zero(); new_len * new_len];
         for i in 0..new_len {
             for j in 0..new_len {
@@ -156,7 +172,16 @@ impl ZpDft {
                 let kk = (i + ij0) * self.len as usize + j + ij0;
                 self.zero_padded_buffer[k] = buffer[kk];
             }
+        } */
+        let mut buffer: Vec<&Complex<f64>> = Vec::with_capacity(new_len * new_len);
+        for i in 0..new_len {
+            for j in 0..new_len {
+                // let k = i * new_len + j;
+                let kk = (i + ij0) * self.len as usize + j + ij0;
+                buffer.push(self.zero_padded_buffer.get(kk).unwrap());
+            }
         }
+        self.zero_padded_buffer = buffer.into_iter().cloned().collect();
         self
     }
     pub fn resize(&mut self, new_len: usize) -> &mut Self {
