@@ -56,12 +56,12 @@ fn glao(cluster: &Objects, seeing_builder: &SeeingBuilder) -> anyhow::Result<()>
         .into_iter()
         .zip(vec![SkyAngle::Arcminute(1f64), SkyAngle::Arcsecond(20.)].into_iter())
     {
-        for band in ["V", "J"] {
+        for (band, glao_fraction) in vec!["V", "J"].into_iter().zip(vec![0.2, 0.4].into_iter()) {
             let mut seeing: Field<Telescope, SeeingLimited> = FieldBuilder::new(tel)
                 .pixel_scale(SkyAngle::Arcsecond(0.3))
                 .field_of_view(fov)
                 .photometry(band)
-                .seeing_limited(seeing_builder.clone().glao(0.2))
+                .seeing_limited(seeing_builder.clone().glao(glao_fraction))
                 .objects(cluster)
                 .exposure(3600.)
                 .photon_noise()
@@ -90,18 +90,21 @@ enum Mode {
 }
 
 fn main() -> anyhow::Result<()> {
+    env_logger::init();
+
     let cli = Cli::parse();
 
     // random generator seed
     env::set_var("SEED", "rebecca1");
 
     let n_sample = 5000;
-    let coordinates = StarDistribution::GlobularBoxed {
+    /*     let coordinates = StarDistribution::GlobularBoxed {
         center: None,
         scale: SkyAngle::Arcsecond(30f64),
         n_sample,
         width: SkyAngle::Arcminute(1f64),
-    };
+    }; */
+    let coordinates = StarDistribution::Uniform(SkyAngle::Arcminute(1f64), n_sample);
     let magnitudes = MagnitudeDistribution::LogNormal(28., 0.7, 0.75);
 
     let cluster: Objects = (coordinates, magnitudes).into();
@@ -178,13 +181,13 @@ fn main() -> anyhow::Result<()> {
             // IMAGES
             bar.set_message("HST");
             hst_field.save(
-                format!("hst_J.pkl"),
+                format!("hst_J.png"),
                 SaveOptions::new().progress(bar.clone()),
             )?;
             bar.reset();
             bar.set_message("JWST");
             jwst_field.save(
-                format!("jwst_J.pkl"),
+                format!("jwst_J.png"),
                 SaveOptions::new().progress(bar.clone()),
             )?;
             bar.finish_and_clear();
@@ -198,7 +201,7 @@ fn main() -> anyhow::Result<()> {
                     bar.set_style(ProgressStyle::with_template(&format!("{}", style)).unwrap());
                     bar.set_message("GMT NGAO");
                     gmt_ngao_field
-                        .save(format!("gmt_ngao_J.pkl"), SaveOptions::new().progress(bar))
+                        .save(format!("gmt_ngao_J.png"), SaveOptions::new().progress(bar))
                         .unwrap();
                 });
                 s.spawn(|| {
@@ -206,7 +209,7 @@ fn main() -> anyhow::Result<()> {
                     bar.set_style(ProgressStyle::with_template(&format!("{}", style)).unwrap());
                     bar.set_message("GMT LTAO");
                     gmt_ltao_field
-                        .save(format!("gmt_ltao_J.pkl"), SaveOptions::new().progress(bar))
+                        .save(format!("gmt_ltao_J.png"), SaveOptions::new().progress(bar))
                         .unwrap();
                 });
             });
