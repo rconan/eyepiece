@@ -16,7 +16,7 @@ Parameters:
  * pixel scale: 0.3arcsec
  * exposure: 1hr 
  * photon noise
- * GLAO seeing FWHM reduction: 20%
+ * GLAO seeing FWHM reduction: 20% @ V and 40% @ J
 
 ### Wide field: 1x1 arcmin
 
