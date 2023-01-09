@@ -1,4 +1,4 @@
-# Simulated globular cluster
+# Simulated uniform star field 
 
 Globular cluster star angular distribution
 
