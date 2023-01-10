@@ -1,4 +1,4 @@
-# Simulated uniform star field 
+# Simulated globular cluster
 
 Globular cluster star angular distribution
 
@@ -16,7 +16,7 @@ Parameters:
  * pixel scale: 0.3arcsec
  * exposure: 1hr 
  * photon noise
- * GLAO seeing FWHM reduction: 20% @ V and 40% @ J
+ * GLAO seeing FWHM reduction: 20%
 
 ### Wide field: 1x1 arcmin
 

@@ -31,9 +31,6 @@ where
  . DFT sampling  : {n_dft}
          "
         );
-        // Zero-padding discrete Fourier transform
-        self.observing_mode
-            .init_fft(n_dft, self.observer.resolution());
 
         // star image stacking buffer
         let mut buffer = vec![0f64; intensity_sampling.pow(2)];
@@ -72,6 +69,9 @@ where
                 ))
             };
             // star intensity map
+            // Zero-padding discrete Fourier transform
+            self.observing_mode
+                .init_fft(n_dft, self.observer.resolution());
             let mut pupil = self.observer.pupil(shift);
             pupil.iter_mut().for_each(|p| *p *= n_photon.sqrt());
             let mut intensity = self
