@@ -18,11 +18,11 @@ serde_json = "1.0.91"
 skyangle.workspace = true
 thiserror = "1.0.38"
 tokio = { version = "1.23.0", features = ["full"] }
-num-complex.workspace = true
 eyepiece = { path = "../api" }
 anyhow.workspace = true
 indicatif.workspace = true
 env_logger.workspace = true
+clap.workspace = true
 
 [dev-dependencies]
 tokio-test = "0.4.2"

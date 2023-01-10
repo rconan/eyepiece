@@ -31,7 +31,7 @@ serde.workspace = true
 transpose = "0.2.2"
 
 [dev-dependencies]
-clap = { version = "4.0.32", features = ["derive"] }
+clap.workspace = true
 env_logger.workspace = true
 serde-pickle = "1.1.1"
 criterion = "0.4"

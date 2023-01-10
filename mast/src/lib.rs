@@ -21,7 +21,7 @@
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use skyangle::SkyAngle;
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt::Display};
 
 const MAST_URL: &str = "https://mast.stsci.edu/api/v0/invoke";
 
@@ -88,7 +88,7 @@ impl Mast {
         }
     }
     /// Queries a circular region aroud a given object
-    pub async fn query_region<S: Into<String> + Serialize>(
+    pub async fn query_region<S: Into<String> + Serialize + Display>(
         &self,
         object_id: S,
         radius: SkyAngle<f64>,
@@ -104,6 +104,7 @@ impl Mast {
         )
         .try_into()?;
 
+        println!("Querying {object_id} ...");
         let response: Value = self
             .client
             .post(self.url.as_str())
@@ -143,9 +144,14 @@ impl Mast {
             .await?
             .json()
             .await?;
-        println!("MAST query status: {:#}", response["status"]);
 
         let objects: Vec<MastObject> = serde_json::from_value(response["data"].clone())?;
+        println!(
+            "MAST query status: {:#} ({} objects)",
+            response["status"],
+            objects.len()
+        );
+
         Ok(MastObjects {
             target: object_id.into(),
             origin: (obj_ra, obj_dec),
@@ -161,44 +167,42 @@ impl Mast {
 
 #[cfg(test)]
 mod tests {
-    use num_complex::Complex;
 
     use super::*;
 
     #[tokio::test]
     async fn query() {
         let mast = Mast::new("V");
-        let mut objects = mast
+        let objects = mast
             .query_region("NGC 6405", SkyAngle::Arcminute(6.))
             .await
             .unwrap();
         println!("Objects #: {}", objects.len());
-        println!("Valid objects #: {}", objects.n_valid());
-        println!("Objects #: {}", objects.only_valid().n_valid());
     }
 
     #[tokio::test]
     async fn local() {
         let mast = Mast::new("V");
-        let mut objects = mast
+        let objects = mast
             .query_region("NGC 6405", SkyAngle::Arcminute(1.))
             .await
             .unwrap();
         println!("Objects #: {}", objects.len());
-        println!("Valid objects #: {}", objects.n_valid());
-        println!("Objects #: {}", objects.only_valid().n_valid());
 
-        let (ra, dec) = objects.origin;
-        let zc = Complex::from_polar(dec.to_radians(), ra.to_radians());
+        let origin = MastObject::from(objects.origin);
 
         let distances: Vec<_> = objects
             .objects
             .iter()
-            .take(24)
-            .map(|object| {
-                let zo = Complex::from_polar(object.dec.to_radians(), object.ra.to_radians());
-                let dz = zo - zc;
-                SkyAngle::Radian(dz.norm()).into_arcmin()
+            // .take(24)
+            .filter_map(|object| {
+                let o = object.offsets(&origin);
+                let a = o.0.to_radians().hypot(o.1.to_radians());
+                if a > 1f64 {
+                    Some(a)
+                } else {
+                    None
+                }
             })
             .collect();
         println!("{distances:?}")
