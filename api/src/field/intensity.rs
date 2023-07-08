@@ -1,8 +1,3 @@
-use super::{Field, Intensity};
-use crate::{Observer, Observing};
-use indicatif::ProgressBar;
-use rand_distr::{Distribution, Poisson};
-
 fn shift_and_add(buffer: &mut [f64], x0: f64, y0: f64, n: i32, intensity: Vec<f64>) {
     let i0 = x0 as i32;
     let j0 = y0 as i32;

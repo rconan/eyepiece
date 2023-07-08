@@ -48,3 +48,13 @@ impl Observer for Gmt {
         false
     }
 }
+
+use serde::ser::{Serialize, Serializer};
+impl Serialize for Gmt {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        "GMT".serialize(serializer)
+    }
+}

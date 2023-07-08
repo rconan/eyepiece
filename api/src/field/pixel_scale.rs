@@ -1,8 +1,9 @@
+use serde::Serialize;
 use skyangle::SkyAngle;
 
-use crate::{Field, Observer, Photometry};
+use crate::{Field, Observer, ObservingModes, Photometry};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 /// Pixel scale possible representations ...
 pub enum PixelScale {
     /// ... as a multiple of the Nyquist sampling criteria λ/2D
@@ -26,7 +27,7 @@ impl From<SkyAngle<f64>> for PixelScale {
         PixelScale::SkyAngle(alpha)
     }
 }
-impl<T: Observer, M> From<&Field<T, M>> for PixelScale {
+impl<T: Observer, M: ObservingModes> From<&Field<T, M>> for PixelScale {
     fn from(field: &Field<T, M>) -> Self {
         PixelScale::SkyAngle(SkyAngle::Radian(field.resolution()))
     }

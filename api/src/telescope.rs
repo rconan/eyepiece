@@ -47,3 +47,12 @@ impl Display for Hst {
         )
     }
 }
+use serde::ser::{Serialize, Serializer};
+impl Serialize for Hst {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        "HST".serialize(serializer)
+    }
+}

@@ -1,18 +1,20 @@
 use image::{ImageResult, Rgb, RgbImage};
 use indicatif::{MultiProgress, ProgressBar};
 use skyangle::Conversion;
-use std::{fmt::Display, fs::File, path::Path};
+use std::{fmt::Display, path::Path};
 
 use super::{
     AdaptiveOptics, Builder, DiffractionLimited, FieldBuilder, FieldOfView, Intensity, Observing,
     PixelScale, SeeingLimited,
 };
-use crate::{Objects, Observer, Photometry};
+use crate::{Objects, Observer, ObservingModes, Photometry};
 
 /// Observer field of regard
+#[derive(Debug)]
 pub struct Field<T, Mode = DiffractionLimited>
 where
     T: Observer,
+    Mode: ObservingModes,
 {
     pub(super) pixel_scale: PixelScale,
     pub(super) field_of_view: FieldOfView,
@@ -20,11 +22,12 @@ where
     pub(super) objects: Objects,
     pub(super) exposure: f64,
     pub(super) poisson_noise: bool,
-    pub observer: T,
+    pub(crate) observer: T,
     pub(super) observing_mode: Observing<Mode>,
     pub(super) flux: Option<f64>,
 }
-impl<T: Observer + Display, Mode> Display for Field<T, Mode> {
+
+impl<T: Observer + Display, Mode: ObservingModes> Display for Field<T, Mode> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "Field in {} band", self.photometry)?;
         writeln!(f, " . pixel scale: {:.3}mas", self.resolution().to_mas())?;
@@ -153,7 +156,7 @@ impl<T: Observer> Builder<Field<T, AdaptiveOptics>> for FieldBuilder<T> {
         }
     }
 }
-impl<T, Mode> Field<T, Mode>
+impl<T, Mode: ObservingModes> Field<T, Mode>
 where
     T: Observer,
 {
@@ -166,25 +169,41 @@ where
         self.field_of_view.get(self)
     }
 }
+
 impl<T, Mode> Field<T, Mode>
 where
     T: Observer + Sync + Send,
-    Mode: Send,
+    Mode: Send + ObservingModes,
     Observing<Mode>: Intensity,
 {
     /// Computes image and save it to file
     pub fn save<P: AsRef<Path>>(&mut self, path: P, save_options: SaveOptions) -> ImageResult<()> {
         let mut intensity = self.intensity(save_options.bar);
         match path.as_ref().extension().and_then(|p| p.to_str()) {
-            Some("pkl") => serde_pickle::to_writer(
-                &mut File::create(path.as_ref())?,
-                &intensity,
-                Default::default(),
-            )
-            .expect(&format!(
-                "failed to write field intensity into pickle file {:?}",
-                path.as_ref()
-            )),
+            /*             Some("pkl") => {
+                #[derive(serde::Serialize)]
+                struct Data<'a, T, Mode>
+                where
+                    T: Observer + Sync + Send,
+                    Mode: ObservingModes + Send,
+                {
+                    field: &'a Field<T, Mode>,
+                    intensity: Vec<f64>,
+                }
+                let data = Data {
+                    field: self,
+                    intensity,
+                };
+                serde_pickle::to_writer(
+                    &mut File::create(path.as_ref())?,
+                    &data,
+                    Default::default(),
+                )
+                .expect(&format!(
+                    "failed to write field intensity into pickle file {:?}",
+                    path.as_ref()
+                ))
+            } */
             Some("png" | "jpg" | "tiff") => {
                 if let Some(lufn) = save_options.lufn {
                     intensity.iter_mut().for_each(|i| *i = lufn(*i));
@@ -276,5 +295,40 @@ impl SaveOptions {
             lufn: Some(lufn),
             ..self
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::SeeingBuilder;
+
+    use super::*;
+
+    type Tel = crate::Hst;
+    fn builder() -> FieldBuilder<Tel> {
+        let tel = Tel::new();
+        let seeing = SeeingBuilder::new(16e-2).ngao(0.75, None);
+        FieldBuilder::new(tel).seeing_limited(seeing)
+    }
+
+    #[test]
+    fn ser_diffraction() {
+        let mut field: Field<Tel, DiffractionLimited> = builder().build();
+        println!("{field}");
+        field.dump("diffraction.pkl").unwrap();
+    }
+
+    #[test]
+    fn ser_seeing() {
+        let mut field: Field<Tel, SeeingLimited> = builder().build();
+        println!("{field}");
+        field.dump("seeing.pkl").unwrap();
+    }
+
+    #[test]
+    fn ser_ao() {
+        let mut field: Field<Tel, AdaptiveOptics> = builder().build();
+        println!("{field}");
+        field.dump("ao.pkl").unwrap();
     }
 }

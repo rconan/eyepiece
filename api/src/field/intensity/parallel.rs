@@ -1,9 +1,12 @@
-use super::*;
+use super::{binning, shift_and_add};
+use crate::{Field, Intensity, Observer, Observing, ObservingModes};
+use indicatif::ProgressBar;
+use rand_distr::{Distribution, Poisson};
 
 impl<T, Mode> Field<T, Mode>
 where
     T: Observer + Sync + Send,
-    Mode: Send,
+    Mode: ObservingModes + Send,
     Observing<Mode>: Intensity,
 {
     /// Computes field-of-view intensity map

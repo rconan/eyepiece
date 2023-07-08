@@ -1,9 +1,10 @@
+use serde::Serialize;
 use skyangle::SkyAngle;
 
 use super::Field;
-use crate::{Observer, Photometry};
+use crate::{Observer, ObservingModes, Photometry};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 /// Field-of-view possible representations ...
 pub enum FieldOfView {
     /// ... as a multiple of the pixel scale
@@ -23,13 +24,13 @@ impl From<usize> for FieldOfView {
         FieldOfView::PixelScale(n)
     }
 }
-impl<T: Observer, M> From<&Field<T, M>> for FieldOfView {
+impl<T: Observer, M: ObservingModes> From<&Field<T, M>> for FieldOfView {
     fn from(field: &Field<T, M>) -> Self {
         FieldOfView::SkyAngle(SkyAngle::Radian(field.field_of_view()))
     }
 }
 impl FieldOfView {
-    pub(super) fn get<T: Observer, M>(&self, field: &Field<T, M>) -> f64 {
+    pub(super) fn get<T: Observer, M: ObservingModes>(&self, field: &Field<T, M>) -> f64 {
         match self {
             FieldOfView::PixelScale(n) => field.resolution() * *n as f64,
             FieldOfView::PixelScaleAt(n, band) => {
@@ -39,7 +40,10 @@ impl FieldOfView {
             FieldOfView::SkyAngle(val) => val.to_radians(),
         }
     }
-    pub(super) fn to_pixelscale_ratio<T: Observer, M>(&self, field: &Field<T, M>) -> f64 {
+    pub(super) fn to_pixelscale_ratio<T: Observer, M: ObservingModes>(
+        &self,
+        field: &Field<T, M>,
+    ) -> f64 {
         match self {
             FieldOfView::PixelScale(n) => *n as f64,
             FieldOfView::PixelScaleAt(..) => self.get(field) / field.resolution(),

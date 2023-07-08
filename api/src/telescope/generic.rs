@@ -1,5 +1,7 @@
 use std::fmt::Display;
 
+use serde::Serialize;
+
 use crate::Observer;
 
 /// Generic circular telescope
@@ -9,7 +11,7 @@ use crate::Observer;
 /// use eyepiece::Telescope;
 /// let tel = Telescope::new(8.).build();
 /// ```
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize)]
 pub struct Telescope {
     /// Primary mirror diameter D (Nyquist sampling criteria: λ/2D)
     pub diameter: f64,

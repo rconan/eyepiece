@@ -1,23 +1,25 @@
 use std::{fmt::Display, marker::PhantomData};
 
-use super::{AdaptiveOptics, DiffractionLimited, SeeingLimited};
+use super::{AdaptiveOptics, DiffractionLimited, ObservingModes, SeeingLimited, SeeingModes};
 use crate::{atmosphere_transfer_function, SeeingBuilder, Star, ZpDft};
 use num_complex::Complex;
 
 /// Observing configurations
-pub struct Observing<Mode> {
+#[derive(Debug)]
+pub struct Observing<Mode: ObservingModes> {
     fft: Option<ZpDft>,
     ifft: Option<ZpDft>,
     otf: Option<Vec<Complex<f64>>>,
-    seeing: Option<SeeingBuilder>,
+    pub(crate) seeing: Option<SeeingBuilder>,
     mode: PhantomData<Mode>,
 }
-impl<Mode> Display for Observing<Mode> {
+
+impl<Mode: ObservingModes> Display for Observing<Mode> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if let Some(seeing) = self.seeing.as_ref() {
             write!(f, "{}", seeing)?;
         } else {
-            writeln!(f, "diffracton limited")?;
+            writeln!(f, "diffraction limited")?;
         }
         Ok(())
     }
@@ -34,9 +36,7 @@ impl Observing<DiffractionLimited> {
         }
     }
 }
-pub trait SeeingModes {}
-impl SeeingModes for SeeingLimited {}
-impl SeeingModes for AdaptiveOptics {}
+
 impl<M: SeeingModes> Observing<M> {
     /// Seeing limited observing mode
     pub fn seeing_limited(seeing: Option<SeeingBuilder>) -> Self {

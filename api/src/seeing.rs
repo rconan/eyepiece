@@ -1,5 +1,6 @@
 use std::fmt::Display;
 
+use serde::Serialize;
 use skyangle::SkyAngle;
 
 use crate::{AdaptiveOpticsCorrection, Photometry, Star};
@@ -15,11 +16,11 @@ use crate::{AdaptiveOpticsCorrection, Photometry, Star};
 ///     .zenith_angle(SkyAngle::Degree(30.))
 ///     .outer_scale(30.);
 /// ```
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct SeeingBuilder {
-    pub fried_parameter: f64,
-    pub outer_scale: f64,
-    pub adaptive_optics: Option<AdaptiveOpticsCorrection>,
+    pub(crate) fried_parameter: f64,
+    pub(crate) outer_scale: f64,
+    pub(crate) adaptive_optics: Option<AdaptiveOpticsCorrection>,
 }
 impl Display for SeeingBuilder {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

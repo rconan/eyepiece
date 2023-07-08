@@ -1,5 +1,7 @@
 use std::{fmt::Display, ops::Deref};
 
+use serde::Serialize;
+
 /// Star photometry
 ///
 /// Photometry is available for the following bands: V, R, I, J, H and K
@@ -8,7 +10,7 @@ use std::{fmt::Display, ops::Deref};
 /// use eyepiece::Photometry;
 /// let photometry: Photometry = "V".into();
 /// ```
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize)]
 pub enum Photometry {
     V(PhotometryData),
     R(PhotometryData),
@@ -32,7 +34,7 @@ impl Deref for Photometry {
     }
 }
 /// Photometric data
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize)]
 pub struct PhotometryData {
     pub wavelength: f64,
     zeropoint: f64,

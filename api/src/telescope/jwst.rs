@@ -5,7 +5,7 @@ use num_complex::Complex;
 use crate::Observer;
 
 /// Hexagonal pupil
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct Hexagon {
     origin: (f64, f64),
     flat_to_flat: f64,
@@ -105,5 +105,15 @@ impl Observer for Jwst {
             }
         }
         false
+    }
+}
+
+use serde::ser::{Serialize, Serializer};
+impl Serialize for Jwst {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        "JWST".serialize(serializer)
     }
 }

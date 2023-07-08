@@ -2,6 +2,7 @@ use std::fmt::Display;
 
 use num_complex::Complex;
 use num_traits::Zero;
+use serde::Serialize;
 use skyangle::SkyAngle;
 
 use crate::{optust, Star, ZpDft};
@@ -94,11 +95,12 @@ impl TransferFunction {
         dbg!(var); */
     }
 }
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct AdaptiveOpticsCorrection {
     strehl_ratio: f64,
     guide_star: Option<Star>,
     laser_guide_star_radius: Option<SkyAngle<f64>>,
+    #[serde(skip)]
     transfer_function: Option<TransferFunction>,
 }
 impl Display for AdaptiveOpticsCorrection {
