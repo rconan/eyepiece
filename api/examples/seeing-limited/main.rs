@@ -1,7 +1,7 @@
 use std::{env, path::Path};
 
 use eyepiece::{
-    Builder, FieldBuilder, Observer, PhotometricBands, PolychromaticField, SeeingBuilder, Telescope,
+    Builder, FieldBuilder, PhotometricBands, PolychromaticField, SeeingBuilder, Telescope,
 };
 use skyangle::SkyAngle;
 
@@ -11,7 +11,6 @@ fn main() -> anyhow::Result<()> {
         .join("seeing-limited");
 
     let tel = Telescope::new(8.).build();
-    // tel.show_pupil(None)?;
     let mut field: PolychromaticField<Telescope> = FieldBuilder::new(tel)
         .pixel_scale(SkyAngle::Arcsecond(0.01))
         .field_of_view(200)

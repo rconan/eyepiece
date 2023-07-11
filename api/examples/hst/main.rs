@@ -11,7 +11,7 @@ fn main() -> anyhow::Result<()> {
         .join("seeing-limited");
 
     let hst = Hst::new();
-    hst.show_pupil(None)?;
+    hst.show_pupil(Option::<&str>::None)?;
     let mut field: Field<Hst> = FieldBuilder::new(hst)
         .pixel_scale(PixelScale::NyquistAt(2, "V".to_string()))
         .field_of_view(21)

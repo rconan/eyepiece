@@ -8,7 +8,7 @@ fn main() -> anyhow::Result<()> {
         .join("jwst");
 
     let jwst = Jwst::new();
-    jwst.show_pupil(None)?;
+    jwst.show_pupil(Option::<&Path>::None)?;
     let mut field: Field<Jwst> = FieldBuilder::new(jwst)
         .pixel_scale(PixelScale::NyquistFraction(4))
         .field_of_view(41)
