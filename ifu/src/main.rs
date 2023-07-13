@@ -1,36 +1,64 @@
 use std::{f64::consts::PI, ops::Deref};
 
+use clap::Parser;
 use eyepiece::{
     Builder, Field, FieldBuilder, FieldImage, Gmt, Hexagon, Observer, SeeingBuilder, SeeingLimited,
 };
 use skyangle::SkyAngle;
 
-fn main() -> anyhow::Result<()> {
-    env_logger::init();
+#[derive(Parser)]
+#[command(author, version, about, long_about = None)]
+struct Cli {
+    /// Fried parameter [cm]
+    #[arg(long, default_value_t = 16.0)]
+    r0: f64,
+    /// zenith angle [deg]
+    #[arg(short, long, default_value_t = 30.0)]
+    zenith_angle: f64,
+    /// Photometric band, one of V,R,I,J,H,K
+    #[arg(short, long, default_value_t = String::from("V"))]
+    band: String,
+    /// IFU hexagon flat-to-flat width [arcsec]
+    #[arg(short, long, default_value_t = 0.4)]
+    width_hex: f64,
+}
 
+fn main() -> anyhow::Result<()> {
+    let cli = Cli::parse();
+
+    // the telescope
     let tel = Gmt::new();
-    let seeing = SeeingBuilder::new(16e-2).zenith_angle(SkyAngle::Degree(30.));
+    // the seeing
+    let seeing = SeeingBuilder::new(cli.r0 * 1e-2).zenith_angle(SkyAngle::Degree(cli.zenith_angle));
+    // image pixel scale (1mas)
     let px = SkyAngle::MilliArcsec(1f64);
+    // image size (6arsec x 6 arcsec)
     let n_px = 6001;
 
+    // on-sky field definition
     let field: Field<Gmt, SeeingLimited> = FieldBuilder::new(tel)
         .pixel_scale(px)
         .field_of_view(n_px)
-        .photometry("V")
+        .photometry(cli.band)
         .seeing_limited(seeing)
         .build();
 
+    // field image
     let mut intensity = FieldImage::from(field);
+    // total intensity
     let flux0 = intensity.flux();
     intensity.save("field.png", Default::default())?;
 
-    let ifu_width = SkyAngle::Arcsecond(0.4);
+    // 7 hexagons IFU
+    let ifu_width = SkyAngle::Arcsecond(cli.width_hex);
     let ifu_px = ifu_width / px;
     let ifu = IFU::new(ifu_px);
-    intensity.masked(&ifu); //.get(0).unwrap());
+    // IFU throughput
+    intensity.masked(&ifu);
     println!("7 Hex. IFU througput: {:.3}", intensity.flux() / flux0);
     intensity.save("masked_field.png", Default::default())?;
 
+    // IFU hexagons throughput
     println!(
         "Individual Hex. throughput: {:.3?}",
         ifu.iter()
@@ -41,6 +69,9 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
+/// Manifest IFU model
+///
+/// The IFU consist of 7 hexagons
 #[derive(Debug, Clone)]
 pub struct IFU(Vec<Hexagon>);
 impl Deref for IFU {
@@ -51,6 +82,7 @@ impl Deref for IFU {
     }
 }
 impl IFU {
+    /// Creates a new IFU based on the size (flat-to-flat) of each hexagone
     pub fn new(f2f: f64) -> Self {
         let (s, c) = (PI / 6.).sin_cos();
         Self(vec![

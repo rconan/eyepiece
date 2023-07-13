@@ -1,12 +1,19 @@
 [package]
 name = "ifu"
 version = "0.1.0"
-edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "GMT MANIFEST 7 fibers IFU"
+repository.workspace = true
+documentation.workspace = true
+readme = "README.md"
+categories.workspace = true
+keywords.workspace = true
 
 [dependencies]
 anyhow.workspace = true
+clap.workspace = true
 env_logger.workspace = true
 eyepiece = { version = "0.7.1", path = "../api" }
 skyangle.workspace = true
