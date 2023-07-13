@@ -25,6 +25,7 @@ where
     pub(crate) observer: T,
     pub(super) observing_mode: Observing<Mode>,
     pub(super) flux: Option<f64>,
+    pub(super) intensity_sampling: Option<usize>,
 }
 
 impl<T: Observer + Display, Mode: ObservingModes> Display for Field<T, Mode> {
@@ -94,6 +95,7 @@ impl<T: Observer> Builder<Field<T, DiffractionLimited>> for FieldBuilder<T> {
             observer,
             observing_mode: Observing::diffraction_limited(),
             flux,
+            intensity_sampling: None,
         }
     }
 }
@@ -123,6 +125,7 @@ impl<T: Observer> Builder<Field<T, SeeingLimited>> for FieldBuilder<T> {
                 seeing.map(|seeing| seeing.wavelength(photometry[0])),
             ),
             flux,
+            intensity_sampling: None,
         }
     }
 }
@@ -153,6 +156,7 @@ impl<T: Observer> Builder<Field<T, AdaptiveOptics>> for FieldBuilder<T> {
                 seeing.map(|seeing| seeing.wavelength(photometry[0])),
             ),
             flux,
+            intensity_sampling: None,
         }
     }
 }

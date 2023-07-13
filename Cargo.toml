@@ -1,5 +1,5 @@
 [workspace]
-members = ["api", "mast"]
+members = ["api", "mast","ifu"]
 
 [workspace.package]
 authors = ["Rod Conan <rconan@gmto.org>"]

@@ -14,6 +14,7 @@ mod observing_mode;
 pub use observing_mode::{Intensity, Observing};
 use serde::Serialize;
 mod intensity;
+pub use intensity::FieldImage;
 mod serpkl;
 
 /// [FieldBuilder] to [Field] interface

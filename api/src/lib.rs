@@ -34,7 +34,6 @@ use num_complex::Complex;
 use num_traits::Zero;
 
 mod zpdft;
-use serde::Serialize;
 pub use zpdft::ZpDft;
 mod telescope;
 pub use telescope::{Gmt, Hexagon, Hst, Jwst, Telescope, TelescopeBuilder};
@@ -52,7 +51,7 @@ mod bessel_knu;
 mod optust;
 
 /// Methods common to all telescopes
-pub trait Observer: Clone + Serialize {
+pub trait Observer: Clone {
     /// Returns telescope diameter
     fn diameter(&self) -> f64;
     /// Returns pupil resolution

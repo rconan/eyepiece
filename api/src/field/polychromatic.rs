@@ -66,6 +66,7 @@ where
                     observer,
                     observing_mode: Observing::diffraction_limited(),
                     flux,
+                    intensity_sampling: None,
                 };
                 field.intensity(None)
             } else {
@@ -81,6 +82,7 @@ where
                         seeing.map(|seeing| seeing.wavelength(field_photometry)),
                     ),
                     flux,
+                    intensity_sampling: None,
                 };
                 field.intensity(bar)
             };

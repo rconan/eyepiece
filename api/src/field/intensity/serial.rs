@@ -82,7 +82,7 @@ where
                 .intensity(pupil, intensity_sampling, star)
                 .unwrap();
             // intensity set to # of photon & Poisson noise
-            // log::debug!("Image flux: {n_photon}");
+            log::debug!("Image flux: {n_photon}");
             if self.poisson_noise {
                 intensity.iter_mut().for_each(|i| {
                     if *i == 0f64 {
@@ -97,6 +97,8 @@ where
             shift_and_add(buffer.as_mut_slice(), x0, y0, n, intensity);
         }
         bar.as_ref().map(|b| b.finish());
+
+        self.intensity_sampling = Some(intensity_sampling);
 
         let m = b as usize;
         if m == 1 {

@@ -105,6 +105,7 @@ where
                         seeing_builder.clone().wavelength(photometry[0]),
                     )),
                     flux,
+                    intensity_sampling: None,
                 };
                 field.intensity(bar)
             } else {
@@ -120,6 +121,7 @@ where
                         seeing_builder.clone().wavelength(photometry[0]),
                     )),
                     flux,
+                    intensity_sampling: None,
                 };
                 field.intensity(bar)
             };

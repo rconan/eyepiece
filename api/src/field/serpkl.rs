@@ -41,7 +41,7 @@ impl Serialize for Observing<AdaptiveOptics> {
 
 impl<T> Serialize for Field<T, DiffractionLimited>
 where
-    T: Observer,
+    T: Observer + Serialize + Serialize,
 {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -61,7 +61,7 @@ where
 }
 impl<T> Serialize for Field<T, SeeingLimited>
 where
-    T: Observer,
+    T: Observer + Serialize + Serialize,
 {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -81,7 +81,7 @@ where
 }
 impl<T> Serialize for Field<T, AdaptiveOptics>
 where
-    T: Observer,
+    T: Observer + Serialize,
 {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -101,7 +101,7 @@ where
 }
 struct Data<'a, T, Mode>
 where
-    T: Observer + Sync + Send,
+    T: Observer + Serialize + Sync + Send,
     Mode: ObservingModes + Send,
 {
     field: &'a Field<T, Mode>,
@@ -109,7 +109,7 @@ where
 }
 impl<'a, T> Serialize for Data<'a, T, DiffractionLimited>
 where
-    T: Observer + Send + Sync,
+    T: Observer + Serialize + Send + Sync,
 {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -123,7 +123,7 @@ where
 }
 impl<'a, T> Serialize for Data<'a, T, SeeingLimited>
 where
-    T: Observer + Send + Sync,
+    T: Observer + Serialize + Send + Sync,
 {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -137,7 +137,7 @@ where
 }
 impl<'a, T> Serialize for Data<'a, T, AdaptiveOptics>
 where
-    T: Observer + Send + Sync,
+    T: Observer + Serialize + Send + Sync,
 {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -152,7 +152,7 @@ where
 
 impl<T> Field<T, DiffractionLimited>
 where
-    T: Observer + Send + Sync,
+    T: Observer + Serialize + Send + Sync,
 {
     pub fn dump<P: AsRef<Path>>(&mut self, path: P) -> Result<(), ImageError> {
         let intensity = self.intensity(Default::default());
@@ -171,7 +171,7 @@ where
 
 impl<T> Field<T, SeeingLimited>
 where
-    T: Observer + Send + Sync,
+    T: Observer + Serialize + Send + Sync,
 {
     pub fn dump<P: AsRef<Path>>(&mut self, path: P) -> Result<(), ImageError> {
         let intensity = self.intensity(Default::default());
@@ -190,7 +190,7 @@ where
 
 impl<T> Field<T, AdaptiveOptics>
 where
-    T: Observer + Send + Sync,
+    T: Observer + Serialize + Send + Sync,
 {
     pub fn dump<P: AsRef<Path>>(&mut self, path: P) -> Result<(), ImageError> {
         let intensity = self.intensity(Default::default());
