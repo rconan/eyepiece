@@ -15,5 +15,5 @@ keywords.workspace = true
 anyhow.workspace = true
 clap.workspace = true
 env_logger.workspace = true
-eyepiece = { version = "0.7.1", path = "../api" }
+eyepiece.workspace = true
 skyangle.workspace = true

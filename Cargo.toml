@@ -13,6 +13,7 @@ categories = ["science", "simulation"]
 keywords = ["telescope", "astronomy"]
 
 [workspace.dependencies]
+eyepiece = {version = "0.8.0", path = "api"}
 skyangle = "0.2.2"
 num-complex = "0.4.2"
 indicatif = "0.17.2"
