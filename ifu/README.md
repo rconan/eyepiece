@@ -8,6 +8,21 @@ There are 3 possible types of IFU to choose from:
 
  The model computes the seeing image and write it to `field.png` and for the chosen IFU,
  it masks the image, write it to `<hex|round|slit>_ifu_field.png` and print the IFU throughput.
+ 
+### Usage
+
+The throughput of a circular IFU of diameter 0.5arcsec for r0=20cm , 50degree of zenith at 800nm is found with:
+```shell
+ifu --r0 20 -z 50 -b I round -d 0.5
+```
+Replacing the round IFU with a slit the same size:
+```shell
+ifu --r0 20 -z 50 -b I slit -w 0.5
+```
+or with the 7 hexagons IFU
+```shell
+ifu --r0 20 -z 50 -b I hex -w 0.5
+```
 
 ## Installing 
 
@@ -53,3 +68,4 @@ ifu round --help
 ```shell
 ifu slit --help
 ```
+
