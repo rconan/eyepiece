@@ -1,5 +1,5 @@
 [workspace]
-members = ["api", "mast","ifu"]
+members = ["api", "mast", "ifu"]
 
 [workspace.package]
 authors = ["Rod Conan <rconan@gmto.org>"]
@@ -13,7 +13,7 @@ categories = ["science", "simulation"]
 keywords = ["telescope", "astronomy"]
 
 [workspace.dependencies]
-eyepiece = {version = "0.8.0", path = "api"}
+eyepiece = { version = "0.8.1", path = "api" }
 skyangle = "0.2.2"
 num-complex = "0.4.2"
 indicatif = "0.17.2"
