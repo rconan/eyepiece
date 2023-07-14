@@ -34,7 +34,7 @@ impl Display for SeeingBuilder {
     }
 }
 impl SeeingBuilder {
-    /// Creates a new atmospheric seeing builder by setting the Fried parameter in meters
+    /// Creates a new atmospheric seeing builder by setting the Fried parameter in meters @ 500nm
     ///
     /// The outer scale is set to 25m.
     pub fn new(fried_parameter: f64) -> Self {
@@ -75,7 +75,7 @@ impl SeeingBuilder {
         let photometry: Photometry = band.into();
         Self {
             fried_parameter: self.fried_parameter
-                * (photometry.wavelength / Photometry::from("V").wavelength).powf(1.2_f64),
+                * (photometry.wavelength / 500e-9).powf(1.2_f64),
             ..self
         }
     }
