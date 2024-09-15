@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use skyangle::SkyAngle;
 
 use crate::{AdaptiveOpticsCorrection, Photometry, Star};
@@ -16,11 +16,11 @@ use crate::{AdaptiveOpticsCorrection, Photometry, Star};
 ///     .zenith_angle(SkyAngle::Degree(30.))
 ///     .outer_scale(30.);
 /// ```
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct SeeingBuilder {
-    pub(crate) fried_parameter: f64,
-    pub(crate) outer_scale: f64,
-    pub(crate) adaptive_optics: Option<AdaptiveOpticsCorrection>,
+    pub fried_parameter: f64,
+    pub outer_scale: f64,
+    pub adaptive_optics: Option<AdaptiveOpticsCorrection>,
 }
 impl Display for SeeingBuilder {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -74,8 +74,7 @@ impl SeeingBuilder {
     pub(crate) fn wavelength<P: Into<Photometry>>(self, band: P) -> Self {
         let photometry: Photometry = band.into();
         Self {
-            fried_parameter: self.fried_parameter
-                * (photometry.wavelength / 500e-9).powf(1.2_f64),
+            fried_parameter: self.fried_parameter * (photometry.wavelength / 500e-9).powf(1.2_f64),
             ..self
         }
     }

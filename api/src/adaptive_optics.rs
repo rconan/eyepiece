@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use num_complex::Complex;
 use num_traits::Zero;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use skyangle::SkyAngle;
 
 use crate::{optust, Star, ZpDft};
@@ -51,6 +51,14 @@ impl Clone for TransferFunction {
         }
     }
 }
+impl PartialEq for TransferFunction {
+    fn eq(&self, other: &Self) -> bool {
+        self.d == other.d
+            && self.n_otf == other.n_otf
+            && self.kappa == other.kappa
+            && self.fitting_cutoff == other.fitting_cutoff
+    }
+}
 impl TransferFunction {
     pub fn new(n_otf: usize, d: f64) -> Self {
         if d < DELTA_0 {
@@ -95,9 +103,9 @@ impl TransferFunction {
         dbg!(var); */
     }
 }
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct AdaptiveOpticsCorrection {
-    strehl_ratio: f64,
+    pub strehl_ratio: f64,
     guide_star: Option<Star>,
     laser_guide_star_radius: Option<SkyAngle<f64>>,
     #[serde(skip)]

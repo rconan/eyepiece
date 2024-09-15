@@ -1,4 +1,4 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use skyangle::{Conversion, SkyAngle};
 use std::{
     fmt::Display,
@@ -8,7 +8,7 @@ use std::{
 type SkyCoordinates = (SkyAngle<f64>, SkyAngle<f64>);
 
 /// A star object
-#[derive(Debug, Clone, Copy, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct Star {
     pub coordinates: SkyCoordinates,
     pub magnitude: f64,

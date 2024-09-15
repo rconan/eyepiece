@@ -105,6 +105,7 @@ where
             return buffer;
         }
         // binning
+        self.intensity_sampling = Some(intensity_sampling / m);
         binning(intensity_sampling, m, buffer)
     }
 }

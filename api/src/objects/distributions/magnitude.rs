@@ -1,6 +1,8 @@
 use super::*;
+use serde::{Deserialize, Serialize};
 
 /// Star magnitude distribution
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub enum MagnitudeDistribution {
     /// Normal distribution
     ///

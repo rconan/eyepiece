@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::Observer;
 
@@ -11,7 +11,7 @@ use crate::Observer;
 /// use eyepiece::Telescope;
 /// let tel = Telescope::new(8.).build();
 /// ```
-#[derive(Debug, Clone, Copy, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct Telescope {
     /// Primary mirror diameter D (Nyquist sampling criteria: λ/2D)
     pub diameter: f64,

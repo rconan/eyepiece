@@ -1,8 +1,10 @@
-use super::*;
+pub(crate) use super::*;
+use serde::{Deserialize, Serialize};
 
 /// Spatial distribution of stars
 ///
 /// The seed of the random generator can be set with the `SEED` environment variable
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub enum StarDistribution {
     /// Uniform distribution
     ///

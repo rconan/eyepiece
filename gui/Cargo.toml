@@ -1,0 +1,25 @@
+[package]
+name = "eyepiece-gui"
+version = "0.1.0"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+description.workspace = true
+repository.workspace = true
+documentation.workspace = true
+readme.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+[dependencies]
+bincode = "1.3.3"
+colorous = "1.0.14"
+eframe = { version = "0.28.1", features = ["serde"] }
+env_logger.workspace = true
+epaint = { version = "0.28.1", features = ["serde"] }
+eyepiece.workspace = true
+log = "0.4.22"
+nanorand = "0.7.0"
+serde.workspace = true
+skyangle.workspace = true
+thiserror = "1.0.63"

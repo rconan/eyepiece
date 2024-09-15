@@ -50,7 +50,7 @@ impl PixelScale {
             PixelScale::SkyAngle(val) => val.to_radians(),
         }
     }
-    pub(super) fn to_nyquist_clamped_ratio<T: Observer>(
+    pub fn to_nyquist_clamped_ratio<T: Observer>(
         &self,
         observer: &T,
         photometry: &Photometry,

@@ -40,10 +40,7 @@ impl FieldOfView {
             FieldOfView::SkyAngle(val) => val.to_radians(),
         }
     }
-    pub(super) fn to_pixelscale_ratio<T: Observer, M: ObservingModes>(
-        &self,
-        field: &Field<T, M>,
-    ) -> f64 {
+    pub fn to_pixelscale_ratio<T: Observer, M: ObservingModes>(&self, field: &Field<T, M>) -> f64 {
         match self {
             FieldOfView::PixelScale(n) => *n as f64,
             FieldOfView::PixelScaleAt(..) => self.get(field) / field.resolution(),

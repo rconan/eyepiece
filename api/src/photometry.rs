@@ -1,6 +1,6 @@
 use std::{fmt::Display, ops::Deref};
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 /// Star photometry
 ///
@@ -10,7 +10,7 @@ use serde::Serialize;
 /// use eyepiece::Photometry;
 /// let photometry: Photometry = "V".into();
 /// ```
-#[derive(Debug, Clone, Copy, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Deserialize, Serialize)]
 pub enum Photometry {
     V(PhotometryData),
     R(PhotometryData),
@@ -34,7 +34,7 @@ impl Deref for Photometry {
     }
 }
 /// Photometric data
-#[derive(Debug, Clone, Copy, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Deserialize, Serialize)]
 pub struct PhotometryData {
     pub wavelength: f64,
     zeropoint: f64,

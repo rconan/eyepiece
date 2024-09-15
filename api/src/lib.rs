@@ -46,7 +46,7 @@ pub use objects::{MagnitudeDistribution, Objects, Star, StarDistribution};
 mod seeing;
 pub use seeing::SeeingBuilder;
 mod adaptive_optics;
-pub(crate) use adaptive_optics::AdaptiveOpticsCorrection;
+pub use adaptive_optics::AdaptiveOpticsCorrection;
 mod bessel_knu;
 mod optust;
 

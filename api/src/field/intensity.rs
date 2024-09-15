@@ -4,7 +4,7 @@ use image::{ImageResult, Rgb, RgbImage};
 
 use crate::{Field, Intensity, Observer, Observing, ObservingModes, PixelScale, SaveOptions};
 
-fn shift_and_add(buffer: &mut [f64], x0: f64, y0: f64, n: i32, intensity: Vec<f64>) {
+pub fn shift_and_add(buffer: &mut [f64], x0: f64, y0: f64, n: i32, intensity: Vec<f64>) {
     let i0 = x0 as i32;
     let j0 = y0 as i32;
     for i in 0..n {
@@ -24,7 +24,7 @@ fn shift_and_add(buffer: &mut [f64], x0: f64, y0: f64, n: i32, intensity: Vec<f6
     }
 }
 
-fn binning(intensity_sampling: usize, m: usize, buffer: Vec<f64>) -> Vec<f64> {
+pub fn binning(intensity_sampling: usize, m: usize, buffer: Vec<f64>) -> Vec<f64> {
     let n = intensity_sampling / m;
     let n_buffer = n * m;
     let h = (intensity_sampling - n_buffer) / 2;
@@ -53,7 +53,7 @@ fn binning(intensity_sampling: usize, m: usize, buffer: Vec<f64>) -> Vec<f64> {
                     bin += **matched_buffer[kk];
                 }
             }
-            let k = i * n + j;
+            let k = i + j * n;
             image[k] = bin;
         }
     }
@@ -102,6 +102,9 @@ impl FieldImage {
         }
         self
     }
+    pub fn resolution(&self) -> [usize; 2] {
+        [self.resolution.0, self.resolution.1]
+    }
     pub fn flux(&self) -> f64 {
         self.pixels.iter().sum()
     }
@@ -130,5 +133,18 @@ impl FieldImage {
             _ => unimplemented!(),
         };
         Ok(())
+    }
+    pub fn pixels(&self) -> Vec<u8> {
+        let mut intensity = self.pixels.clone();
+
+        let save_options = SaveOptions::default();
+        let threshold = save_options.saturation.threshold(intensity.iter());
+        intensity.iter_mut().for_each(|i| *i /= threshold);
+
+        let lut = colorous::CUBEHELIX;
+        intensity
+            .iter()
+            .flat_map(|i| lut.eval_continuous(*i).into_array().to_vec())
+            .collect()
     }
 }
