@@ -42,7 +42,6 @@ impl Gui for Camera {
             );
             ui.label("s");
         });
-        ui.checkbox(&mut obs.camera.photon_noise, "Photon noise");
     }
 }
 

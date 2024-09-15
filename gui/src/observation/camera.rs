@@ -12,7 +12,6 @@ pub struct Camera {
     pub pixel_scale: CameraSkyPixel,
     pub field_of_view: SkyAngle<f64>,
     pub spectral_filter: eyepiece::Photometry,
-    pub photon_noise: bool,
 }
 
 impl Default for Camera {
@@ -22,7 +21,6 @@ impl Default for Camera {
             pixel_scale: CameraSkyPixel(SkyAngle::MilliArcsec(10.0)),
             field_of_view: SkyAngle::Arcsecond(1f64),
             spectral_filter: "K".into(),
-            photon_noise: false,
         }
     }
 }
@@ -35,15 +33,11 @@ impl Display for Camera {
 
 impl Camera {
     pub fn build<T: eyepiece::Observer>(&self, builder: FieldBuilder<T>) -> FieldBuilder<T> {
-        let field_builder = builder
+        builder
             .exposure(self.exposure)
             .pixel_scale(self.pixel_scale.clone())
             .field_of_view(self.field_of_view.clone())
-            .photometry(self.spectral_filter);
-        if self.photon_noise {
-            field_builder.photon_noise()
-        } else {
-            field_builder
-        }
+            .photometry(self.spectral_filter)
+            .photon_noise()
     }
 }

@@ -77,7 +77,7 @@ impl Gui for ObservingMode {
                         ui.add(
                             egui::DragValue::new(strehl_ratio)
                                 .speed(5.0)
-                                .range(50.0..=90.0),
+                                .range(10.0..=90.0),
                         );
                         ui.label("[%]");
                     });

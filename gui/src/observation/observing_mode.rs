@@ -22,7 +22,9 @@ impl Display for ObservingMode {
         match self {
             ObservingMode::DiffractionLimited => write!(f, "DiffractionLimited"),
             ObservingMode::SeeingLimited(_) => write!(f, "SeeingLimited"),
-            ObservingMode::AdaptiveOptics { .. } => write!(f, "AdaptiveOptics"),
+            ObservingMode::AdaptiveOptics { strehl_ratio, .. } => {
+                write!(f, "AdaptiveOptics{strehl_ratio}")
+            }
         }
     }
 }

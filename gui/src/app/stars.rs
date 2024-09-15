@@ -64,12 +64,12 @@ impl Gui for Stars {
             ui.label("Magnitude: ");
             ui.selectable_value(
                 &mut obs.stars.magnitude,
-                Magnitude::Normal(MagnitudeDistribution::Normal(0f64, 1f64)),
+                Magnitude::Normal(MagnitudeDistribution::Normal(14f64, 1f64)),
                 "Normal",
             );
             ui.selectable_value(
                 &mut obs.stars.magnitude,
-                Magnitude::LogNormal(MagnitudeDistribution::LogNormal(0f64, 0f64, 1f64)),
+                Magnitude::LogNormal(MagnitudeDistribution::LogNormal(0f64, 14f64, 1f64)),
                 "Log-Normal",
             );
         });
@@ -85,9 +85,9 @@ impl Gui for Stars {
             }
             Magnitude::LogNormal(MagnitudeDistribution::LogNormal(offset, mean, std)) => {
                 ui.horizontal(|ui| {
-                    ui.label("Mean");
+                    ui.label("Offset");
                     ui.add(egui::DragValue::new(offset).speed(0.1));
-                    ui.label("Std");
+                    ui.label("Mean");
                     ui.add(egui::DragValue::new(mean).speed(0.1));
                     ui.label("Scale");
                     ui.add(egui::DragValue::new(std).speed(0.1));
@@ -95,6 +95,6 @@ impl Gui for Stars {
             }
             _ => unimplemented!(),
         }
-        ui.checkbox(&mut obs.stars.seed, "Update random seed");
+        ui.checkbox(&mut obs.stars.seed, "Recompute random distributions");
     }
 }

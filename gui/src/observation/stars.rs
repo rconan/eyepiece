@@ -50,8 +50,13 @@ pub enum Magnitude {
 impl Display for Magnitude {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Magnitude::Normal(_) => write!(f, "Normal"),
-            Magnitude::LogNormal(_) => write!(f, "LogNormal"),
+            Magnitude::Normal(MagnitudeDistribution::Normal(mean, std)) => {
+                write!(f, "Normal{mean}:{std}")
+            }
+            Magnitude::LogNormal(MagnitudeDistribution::LogNormal(_, mean, std)) => {
+                write!(f, "LogNormal{mean}:{std}")
+            }
+            _ => write!(f, "Magnitude"),
         }
     }
 }
@@ -67,7 +72,7 @@ impl Magnitude {
 
 impl Default for Magnitude {
     fn default() -> Self {
-        Self::Normal(MagnitudeDistribution::Normal(0f64, 1f64))
+        Self::Normal(MagnitudeDistribution::Normal(14f64, 1f64))
     }
 }
 
