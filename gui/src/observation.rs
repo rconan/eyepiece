@@ -5,6 +5,7 @@ use std::{
     fs::File,
     io::{self, BufReader, BufWriter},
     path::Path,
+    thread::{self, JoinHandle},
 };
 
 use epaint::ColorImage;
@@ -66,33 +67,37 @@ impl<T: Observer> Builder for FieldBuilder<T> {
 }
 
 impl Observation {
-    pub fn build(&mut self) {
-        if self.stars.seed {
-            let mut rng = WyRand::new();
-            env::set_var("SEED", format!("{}", rng.generate::<u64>()));
-        }
+    pub fn build(&mut self) -> JoinHandle<FieldImage> {
         self.stars.update_fov(self.camera.field_of_view);
-        let image = match self.telescope {
-            Based::Ground(Telescope::GMT) => FieldBuilder::new(Gmt::new())
-                .camera(&self.camera)
-                .objects(&self.stars)
-                .observation(&self.mode),
-            Based::Ground(Telescope::Telescope(telescope)) => FieldBuilder::new(telescope)
-                .camera(&self.camera)
-                .objects(&self.stars)
-                .observation(&self.mode),
-            Based::Space(Telescope::JWST) => FieldBuilder::new(Jwst::new())
-                .camera(&self.camera)
-                .objects(&self.stars)
-                .observation(&self.mode),
-            Based::Space(Telescope::HST) => FieldBuilder::new(Hst::new())
-                .camera(&self.camera)
-                .objects(&self.stars)
-                .observation(&self.mode),
-            _ => unimplemented!(),
-        };
-        let pixels = image.pixels();
-        self.image = Some(ColorImage::from_rgb(image.resolution(), &pixels));
+        let this = self.clone();
+        thread::spawn(move || {
+            if this.stars.seed {
+                let mut rng = WyRand::new();
+                env::set_var("SEED", format!("{}", rng.generate::<u64>()));
+            }
+            match this.telescope {
+                Based::Ground(Telescope::GMT) => FieldBuilder::new(Gmt::new())
+                    .camera(&this.camera)
+                    .objects(&this.stars)
+                    .observation(&this.mode),
+                Based::Ground(Telescope::Telescope(telescope)) => FieldBuilder::new(telescope)
+                    .camera(&this.camera)
+                    .objects(&this.stars)
+                    .observation(&this.mode),
+                Based::Space(Telescope::JWST) => FieldBuilder::new(Jwst::new())
+                    .camera(&this.camera)
+                    .objects(&this.stars)
+                    .observation(&this.mode),
+                Based::Space(Telescope::HST) => FieldBuilder::new(Hst::new())
+                    .camera(&this.camera)
+                    .objects(&this.stars)
+                    .observation(&this.mode),
+                _ => unimplemented!(),
+            }
+            // image.pixels()
+            // let pixels = image.pixels();
+            // self.image = Some(ColorImage::from_rgb(image.resolution(), &pixels));
+        })
     }
     pub fn save<P: AsRef<Path>>(&self, path: P) -> Result<()> {
         let file = File::create(path.as_ref().with_extension("eye"))?;

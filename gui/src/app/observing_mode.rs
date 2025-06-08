@@ -26,16 +26,16 @@ impl Gui for ObservingMode {
                 ),
                 "Seeing Limited",
             );
-            ui.selectable_value(
-                &mut obs.mode,
-                ObservingMode::AdaptiveOptics {
-                    seeing: SeeingBuilder::new(0.15)
-                        .zenith_angle(SkyAngle::Degree(0.))
-                        .outer_scale(30.),
-                    strehl_ratio: 50f64,
-                },
-                "Adaptive Optics",
-            );
+            // ui.selectable_value(
+            //     &mut obs.mode,
+            //     ObservingMode::AdaptiveOptics {
+            //         seeing: SeeingBuilder::new(0.15)
+            //             .zenith_angle(SkyAngle::Degree(0.))
+            //             .outer_scale(30.),
+            //         strehl_ratio: 50f64,
+            //     },
+            //     "Adaptive Optics",
+            // );
         }
         if let Based::Ground(_) = obs.telescope {
             if let ObservingMode::SeeingLimited(SeeingBuilder {

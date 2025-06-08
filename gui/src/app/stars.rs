@@ -16,30 +16,37 @@ impl Gui for Stars {
     fn gui(obs: &mut Observation, ui: &mut eframe::egui::Ui) {
         ui.horizontal(|ui| {
             ui.label("Distribution: ");
-            ui.selectable_value(
-                &mut obs.stars.distribution,
-                Distribution::Uniform(StarDistribution::Uniform(
-                    Camera::default().field_of_view,
-                    1,
-                )),
-                "Uniform",
-            );
-            ui.selectable_value(
-                &mut obs.stars.distribution,
-                Distribution::Globular(StarDistribution::GlobularBoxed {
-                    center: None,
-                    scale: SkyAngle::Arcsecond(1f64),
-                    n_sample: 1,
-                    width: Camera::default().field_of_view,
-                }),
-                "Globular",
-            );
+            egui::ComboBox::from_label("")
+                .selected_text(match obs.stars.distribution {
+                    Distribution::Uniform(_) => "Uniform",
+                    Distribution::Globular(_) => "Globular",
+                })
+                .show_ui(ui, |ui| {
+                    ui.selectable_value(
+                        &mut obs.stars.distribution,
+                        Distribution::Uniform(StarDistribution::Uniform(
+                            Camera::default().field_of_view,
+                            1,
+                        )),
+                        "Uniform",
+                    );
+                    ui.selectable_value(
+                        &mut obs.stars.distribution,
+                        Distribution::Globular(StarDistribution::GlobularBoxed {
+                            center: None,
+                            scale: SkyAngle::Arcsecond(1f64),
+                            n_sample: 1,
+                            width: Camera::default().field_of_view,
+                        }),
+                        "Globular",
+                    );
+                });
         });
         match &mut obs.stars.distribution {
             Distribution::Uniform(StarDistribution::Uniform(_, n_sample)) => {
                 ui.horizontal(|ui| {
                     ui.label("Star #");
-                    ui.add(egui::DragValue::new(n_sample).speed(1).range(0..=1000));
+                    ui.add(egui::DragValue::new(n_sample).speed(1).range(0..=100));
                 });
             }
             Distribution::Globular(StarDistribution::GlobularBoxed {
@@ -67,11 +74,11 @@ impl Gui for Stars {
                 Magnitude::Normal(MagnitudeDistribution::Normal(14f64, 1f64)),
                 "Normal",
             );
-            ui.selectable_value(
-                &mut obs.stars.magnitude,
-                Magnitude::LogNormal(MagnitudeDistribution::LogNormal(0f64, 14f64, 1f64)),
-                "Log-Normal",
-            );
+            // ui.selectable_value(
+            //     &mut obs.stars.magnitude,
+            //     Magnitude::LogNormal(MagnitudeDistribution::LogNormal(0f64, 14f64, 1f64)),
+            //     "Log-Normal",
+            // );
         });
 
         match &mut obs.stars.magnitude {
@@ -95,6 +102,6 @@ impl Gui for Stars {
             }
             _ => unimplemented!(),
         }
-        ui.checkbox(&mut obs.stars.seed, "Recompute random distributions");
+        ui.checkbox(&mut obs.stars.seed, "Reset random distributions");
     }
 }

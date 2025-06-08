@@ -137,6 +137,9 @@ impl FieldImage {
     pub fn pixels(&self) -> Vec<u8> {
         let mut intensity = self.pixels.clone();
 
+        dbg!(intensity.iter().sum::<f64>());
+        dbg!(intensity.iter().max_by(|x, y| x.partial_cmp(y).unwrap()));
+
         let save_options = SaveOptions::default();
         let threshold = save_options.saturation.threshold(intensity.iter());
         intensity.iter_mut().for_each(|i| *i /= threshold);

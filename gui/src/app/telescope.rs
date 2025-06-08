@@ -15,11 +15,11 @@ impl Gui for Based {
             ui.selectable_value(&mut obs.telescope, Based::Space(Telescope::HST), "HST");
         });
         ui.horizontal(|ui| {
-            ui.selectable_value(
-                &mut obs.telescope,
-                Based::Ground(Telescope::Telescope(eyepiece::Telescope::new(8f64).build())),
-                "Circular",
-            );
+            // ui.selectable_value(
+            //     &mut obs.telescope,
+            //     Based::Ground(Telescope::Telescope(eyepiece::Telescope::new(8f64).build())),
+            //     "Circular",
+            // );
             if let Based::Ground(Telescope::Telescope(eyepiece::Telescope { diameter, .. })) =
                 &mut obs.telescope
             {
