@@ -12,8 +12,8 @@
     <!-- config for our rust wasm binary. go to https://trunkrs.dev/assets/#rust for more customization -->
     
 <script type="module">
-import init, * as bindings from '/eyepiece-gui-e2ad1c90e281571.js';
-const wasm = await init({ module_or_path: '/eyepiece-gui-e2ad1c90e281571_bg.wasm' });
+import init, * as bindings from 'https://rconan.github.io/eyepiece/eyepiece-gui-e2ad1c90e281571.js';
+const wasm = await init({ module_or_path: 'https://rconan.github.io/eyepiece/eyepiece-gui-e2ad1c90e281571_bg.wasm' });
 
 
 window.wasmBindings = bindings;
@@ -23,9 +23,9 @@ dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
 
 </script>
     <!-- this is the base url relative to which other urls will be constructed. trunk will insert this from the public-url option -->
-    <base href="/" />
+    <base href="https://rconan.github.io/eyepiece/" />
 
-    <link rel="icon" href="/favicon-f402c8741ce815ec.ico" integrity="sha384-jNOAE6jgE03LznIulCTVP6BH4NrTuROFjP9wj8bV1UUMJKtZAvstFpIAP3PDcFpx"/>
+    <link rel="icon" href="https://rconan.github.io/eyepiece/favicon-f402c8741ce815ec.ico" integrity="sha384-jNOAE6jgE03LznIulCTVP6BH4NrTuROFjP9wj8bV1UUMJKtZAvstFpIAP3PDcFpx"/>
 
 
     
@@ -127,7 +127,7 @@ dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
             }
         }
     </style>
-<link rel="modulepreload" href="/eyepiece-gui-e2ad1c90e281571.js" crossorigin="anonymous" integrity="sha384-JBNjPNcOTOzTRiO1RfS/LnwLR6CEjc2TLa3jWky8AF4XSSBkZ+jgjWD+uPo78gdb"><link rel="preload" href="/eyepiece-gui-e2ad1c90e281571_bg.wasm" crossorigin="anonymous" integrity="sha384-rAaQ3D1B/TUSSeCl6TKSVoIdKbm45TmAGJjeCKzx+3aBKGV2M8QI1eUhk2ONV9yA" as="fetch" type="application/wasm"></head>
+<link rel="modulepreload" href="https://rconan.github.io/eyepiece/eyepiece-gui-e2ad1c90e281571.js" crossorigin="anonymous" integrity="sha384-JBNjPNcOTOzTRiO1RfS/LnwLR6CEjc2TLa3jWky8AF4XSSBkZ+jgjWD+uPo78gdb"><link rel="preload" href="https://rconan.github.io/eyepiece/eyepiece-gui-e2ad1c90e281571_bg.wasm" crossorigin="anonymous" integrity="sha384-rAaQ3D1B/TUSSeCl6TKSVoIdKbm45TmAGJjeCKzx+3aBKGV2M8QI1eUhk2ONV9yA" as="fetch" type="application/wasm"></head>
 
 <body>
     <!-- The WASM code will resize the canvas dynamically -->
