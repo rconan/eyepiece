@@ -1,8 +1,0 @@
-/target
-/fields
-Cargo.lock
-*.png
-*.tiff
-*.svg
-*.data
-*.pkl
