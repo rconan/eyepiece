@@ -32,20 +32,23 @@ impl eframe::App for Program {
             ui.horizontal(|ui| {
                 if ui.button("Compute field!").clicked() {
                     self.build();
+                    #[cfg(target_arch = "wasm32")]
+                    web_sys::console::log_1(&format!("{:?}", self.state).into());
                 }
+                // #[cfg(target_arch = "wasm32")]
+                // web_sys::console::log_1(&"building field ...".into());
                 if !self.is_built() {
                     if let State::Building = self.state {
+                        #[cfg(target_arch = "wasm32")]
+                        web_sys::console::log_1(&"computing...".into());
                         ui.spinner();
                         ui.label("computing!");
+                        ctx.request_repaint();
                     }
                 }
             });
         });
         egui::CentralPanel::default().show(ctx, |ui| {
-            // ui.group(|ui| {
-            //     ui.label("ARCHIVE");
-            //     self.gui(ui)
-            // });
             self.gui(ui);
             match self.state {
                 State::Observing => {

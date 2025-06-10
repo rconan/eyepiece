@@ -30,6 +30,11 @@ skyangle.workspace = true
 serde.workspace = true
 transpose = "0.2.2"
 
+# web:
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-timer = "0.2.5"
+getrandom = { version = "0.2", features = ["js"] }
+
 [dev-dependencies]
 clap.workspace = true
 env_logger.workspace = true

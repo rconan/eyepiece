@@ -10,9 +10,9 @@ use super::Gui;
 impl Gui for Based {
     fn gui(obs: &mut Observation, ui: &mut eframe::egui::Ui) {
         ui.horizontal(|ui| {
-            ui.selectable_value(&mut obs.telescope, Based::Ground(Telescope::GMT), "GMT");
-            ui.selectable_value(&mut obs.telescope, Based::Space(Telescope::JWST), "JWST");
             ui.selectable_value(&mut obs.telescope, Based::Space(Telescope::HST), "HST");
+            ui.selectable_value(&mut obs.telescope, Based::Space(Telescope::JWST), "JWST");
+            ui.selectable_value(&mut obs.telescope, Based::Ground(Telescope::GMT), "GMT");
         });
         ui.horizontal(|ui| {
             // ui.selectable_value(

@@ -1,4 +1,7 @@
-use std::thread::JoinHandle;
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Arc, Mutex,
+};
 
 use epaint::ColorImage;
 use eyepiece::FieldImage;
@@ -29,7 +32,8 @@ pub struct Program {
     pub observation: Observation,
     pub archive: Option<Archive>,
     pub state: State,
-    handle: Option<JoinHandle<FieldImage>>,
+    field: Arc<Mutex<FieldImage>>,
+    flag: Arc<AtomicBool>,
 }
 
 impl Default for Program {
@@ -38,7 +42,8 @@ impl Default for Program {
             observation: Default::default(),
             archive: None,
             state: State::Idle,
-            handle: None,
+            field: Default::default(),
+            flag: Arc::new(AtomicBool::new(false)),
         }
     }
 }
@@ -46,31 +51,23 @@ impl Default for Program {
 impl Program {
     pub fn build(&mut self) {
         self.state = State::Building;
-        self.handle = Some(self.observation.build());
+        self.observation
+            .build(self.field.clone(), self.flag.clone());
     }
     pub fn is_built(&mut self) -> bool {
-        match self.handle.take() {
-            Some(h) => {
-                if h.is_finished() {
-                    let image = h.join().unwrap();
-                    let pixels = image.pixels();
-                    self.observation.image =
-                        Some(ColorImage::from_rgb(image.resolution(), &pixels));
-                    self.archive
-                        .get_or_insert(Default::default())
-                        .observations
-                        .push(self.observation.clone());
-                    self.state = State::Observing;
-                    true
-                } else {
-                    self.handle = Some(h);
-                    false
-                }
-            }
-            None => {
-                // self.build();
-                false
-            }
+        if self.flag.load(Ordering::Relaxed) {
+            let image = &*self.field.lock().unwrap();
+            let pixels = image.pixels();
+            self.observation.image = Some(ColorImage::from_rgb(image.resolution(), &pixels));
+            self.archive
+                .get_or_insert(Default::default())
+                .observations
+                .push(self.observation.clone());
+            self.state = State::Observing;
+            self.flag.store(false, Ordering::Relaxed);
+            true
+        } else {
+            false
         }
     }
 }

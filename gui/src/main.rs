@@ -1,11 +1,9 @@
 use eyepiece_gui::Program;
-use std::default::Default;
-use std::env;
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> eframe::Result {
     env_logger::init();
-    env::set_var("SEED", "peekaboo42");
+    std::env::set_var("SEED", "peekaboo42");
 
     let native_options = eframe::NativeOptions::default();
     eframe::run_native(
@@ -17,6 +15,15 @@ fn main() -> eframe::Result {
 
 #[cfg(target_arch = "wasm32")]
 fn main() {
+    use std::sync::atomic::Ordering;
+    eyepiece::SEED.store(
+        wasm_timer::SystemTime::now()
+            .duration_since(wasm_timer::SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_millis() as u64,
+        Ordering::Relaxed,
+    );
+
     use eframe::wasm_bindgen::JsCast as _;
 
     // Redirect `log` message to `console.log` and friends:
@@ -40,7 +47,7 @@ fn main() {
             .start(
                 canvas,
                 web_options,
-                Box::new(|cc| Ok(Box::new(Program::default()))),
+                Box::new(|_| Ok(Box::new(Program::default()))),
             )
             .await;
 

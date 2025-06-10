@@ -65,7 +65,7 @@ mod parallel;
 #[cfg(not(feature = "parallel"))]
 mod serial;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct FieldImage {
     #[allow(dead_code)]
     pixel_scale: PixelScale,

@@ -27,7 +27,7 @@
 //!
 //! More examples can be found [here](https://github.com/rconan/eyepiece/tree/main/api/examples)
 
-use std::path::Path;
+use std::{path::Path, sync::atomic::AtomicU64, u64};
 
 use image::{ImageResult, Rgb, RgbImage};
 use num_complex::Complex;
@@ -49,6 +49,8 @@ mod adaptive_optics;
 pub use adaptive_optics::AdaptiveOpticsCorrection;
 mod bessel_knu;
 mod optust;
+
+pub static SEED: AtomicU64 = AtomicU64::new(u64::MIN);
 
 /// Methods common to all telescopes
 pub trait Observer: Clone {

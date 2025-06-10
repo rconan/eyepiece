@@ -1,3 +1,7 @@
+use std::sync::atomic::Ordering;
+
+use crate::SEED;
+
 use super::*;
 use serde::{Deserialize, Serialize};
 
@@ -18,7 +22,15 @@ impl MagnitudeDistribution {
         let mut rng: SipRng = if let Ok(seed) = env::var("SEED") {
             Seeder::from(seed).make_rng()
         } else {
-            let now = Instant::now();
+            let seed = SEED.load(Ordering::Relaxed);
+            let now = if seed > 0 {
+                seed
+            } else {
+                SystemTime::now()
+                    .duration_since(SystemTime::UNIX_EPOCH)
+                    .unwrap()
+                    .as_millis() as u64
+            };
             Seeder::from(now).make_rng()
         };
         match self {

@@ -1,25 +1,23 @@
 use serde::{Deserialize, Serialize};
 use std::{
-    env,
     fmt::Display,
     fs::File,
     io::{self, BufReader, BufWriter},
     path::Path,
-    thread::{self, JoinHandle},
 };
 
 use epaint::ColorImage;
-use eyepiece::{FieldBuilder, FieldImage, Gmt, Hst, Jwst, Observer};
+use eyepiece::{FieldBuilder, FieldImage, Observer};
 
 mod camera;
 pub use camera::Camera;
 mod observing_mode;
-use nanorand::{Rng, WyRand};
 pub use observing_mode::ObservingMode;
 mod telescope;
 pub use telescope::{Based, Telescope};
 pub mod stars;
 pub use stars::Stars;
+mod build;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ObservationError {
@@ -67,38 +65,6 @@ impl<T: Observer> Builder for FieldBuilder<T> {
 }
 
 impl Observation {
-    pub fn build(&mut self) -> JoinHandle<FieldImage> {
-        self.stars.update_fov(self.camera.field_of_view);
-        let this = self.clone();
-        thread::spawn(move || {
-            if this.stars.seed {
-                let mut rng = WyRand::new();
-                env::set_var("SEED", format!("{}", rng.generate::<u64>()));
-            }
-            match this.telescope {
-                Based::Ground(Telescope::GMT) => FieldBuilder::new(Gmt::new())
-                    .camera(&this.camera)
-                    .objects(&this.stars)
-                    .observation(&this.mode),
-                Based::Ground(Telescope::Telescope(telescope)) => FieldBuilder::new(telescope)
-                    .camera(&this.camera)
-                    .objects(&this.stars)
-                    .observation(&this.mode),
-                Based::Space(Telescope::JWST) => FieldBuilder::new(Jwst::new())
-                    .camera(&this.camera)
-                    .objects(&this.stars)
-                    .observation(&this.mode),
-                Based::Space(Telescope::HST) => FieldBuilder::new(Hst::new())
-                    .camera(&this.camera)
-                    .objects(&this.stars)
-                    .observation(&this.mode),
-                _ => unimplemented!(),
-            }
-            // image.pixels()
-            // let pixels = image.pixels();
-            // self.image = Some(ColorImage::from_rgb(image.resolution(), &pixels));
-        })
-    }
     pub fn save<P: AsRef<Path>>(&self, path: P) -> Result<()> {
         let file = File::create(path.as_ref().with_extension("eye"))?;
         let mut buffer = BufWriter::new(file);
@@ -154,6 +120,7 @@ impl Config {
                     .objects(stars)
                     .build();
                 field.intensity(None)
+        glag
             }
             TelescopeKind::JWST => {
                 let mut field: Field<Jwst> = FieldBuilder::new(Jwst::new())

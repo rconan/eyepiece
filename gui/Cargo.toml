@@ -26,7 +26,7 @@ eframe = { version = "0.31", default-features = false, features = ["serde",
 epaint = { version = "0.31.1", features = ["serde"] }
 eyepiece.workspace = true
 log = "0.4.27"
-nanorand = "0.8.0"
+# nanorand = "0.8.0"
 serde.workspace = true
 skyangle.workspace = true
 thiserror = "2.0.12"
@@ -38,13 +38,17 @@ env_logger.workspace = true
 
 # web:
 [target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = "0.2.100"
 wasm-bindgen-futures = "0.4.50"
 web-sys = "0.3.70"              # to access the DOM (to hide the loading text)
 getrandom = { version = "0.2", features = ["js"] }
+wasm-timer = "0.2.5"
 
 # It's recommended to set the flag on a per-target basis:
-[target.wasm32-unknown-unknown]
-rustflags = ['--cfg', 'getrandom_backend="wasm_js"']
+# [target.wasm32-unknown-unknown]
+# rustflags = ['--cfg', 'getrandom_backend="wasm_js"',"-C", "target-feature=+atomics,+bulk-memory,+mutable-globals"]
+# [target.wasm32-unknown-unknown]
+# rustflags = ["-C", "target-feature=+atomics,+bulk-memory,+mutable-globals"]
 
 [profile.release]
 opt-level = 2 # fast and small wasm

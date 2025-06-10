@@ -18,17 +18,17 @@ impl Display for Based {
 
 impl Default for Based {
     fn default() -> Self {
-        Based::Ground(Telescope::default())
+        Based::Space(Telescope::default())
     }
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Serialize, Deserialize)]
 pub enum Telescope {
     #[default]
+    HST,
+    JWST,
     GMT,
     Telescope(eyepiece::Telescope),
-    JWST,
-    HST,
 }
 
 impl Display for Telescope {
