@@ -2,8 +2,8 @@ var cacheName = 'egui-template-pwa';
 var filesToCache = [
   './',
   './index.html',
-  './eyepiece-gui.js',
-  './eyepiece-gui_bg.wasm',
+  './eyepiece-gui-e2ad1c90e281571.js',
+  './eyepiece-gui-e2ad1c90e281571_bg.wasm',
 ];
 
 /* Start the service worker and cache all of the app's content */
