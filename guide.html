@@ -68,7 +68,6 @@ dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
         /* Allow canvas to fill entire web page: */
         html,
         body {
-            overflow: hidden;
             margin: 0 !important;
             padding: 0 !important;
             height: 100%;
@@ -115,12 +114,8 @@ dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
             margin-bottom: 0rem;
             padding-bottom: 0.rem;
         }
-        .column h3 {
-            margin-bottom: 1px;
-        }
 
         .column p {
-            margin-top: 1px;
             margin-bottom: 1rem;
             text-align: justify;
         }
@@ -154,6 +149,12 @@ dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
             text-align: center;
         }
 
+                code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
         /* ---------------------------------------------- */
         /* Loading animation from https://loading.io/css/ */
         .lds-dual-ring {
@@ -184,62 +185,78 @@ dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
             }
         }
     </style>
-<link rel="modulepreload" href="https://rconan.github.io/eyepiece/eyepiece-gui-e2ad1c90e281571.js" crossorigin="anonymous" integrity="sha384-JBNjPNcOTOzTRiO1RfS/LnwLR6CEjc2TLa3jWky8AF4XSSBkZ+jgjWD+uPo78gdb"><link rel="preload" href="https://rconan.github.io/eyepiece/eyepiece-gui-e2ad1c90e281571_bg.wasm" crossorigin="anonymous" integrity="sha384-rAaQ3D1B/TUSSeCl6TKSVoIdKbm45TmAGJjeCKzx+3aBKGV2M8QI1eUhk2ONV9yA" as="fetch" type="application/wasm"></head>
+</head>
 
 <body>
     <div class="container">
         <header class="header">
-            <h1>Eyepiece</h1>
+            <h1>Eyepiece Guide</h1>
             <!-- <p>A simple and clean 2-column layout</p> -->
         </header>
        <div class="main-content">
             <main class="column left-column">
-            <!-- The WASM code will resize the canvas dynamically -->
-        
-                <!-- the id is hardcoded in main.rs . so, make sure both match. -->
-                <canvas id="the_canvas_id"></canvas>
-
-                <!-- the loading spinner will be removed in main.rs -->
-                <div class="centered" id="loading_text">
-                    <p style="font-size:16px">
-                        Loading…
-                    </p>
-                    <div class="lds-dual-ring"></div>
+                This guide will walk you through the eyepiece app with a series of little tutorials (You can reset the app by reloading the page).
+                <div class="sidebar-item">
+                    <!-- <h3>Step 1</h3> -->
+                    <ul>
+                    <li>Press the <code>Compute field</code> button once and then press <code>Delete field</code>.</li>
+                    <li>Press the <code>Compute field</code> button twice and then press <code>Delete field</code> twice</li>
+                    </ul>
                 </div>
-
+                <div class="sidebar-item">
+                    <!-- <h3>Step 2</h3> -->
+                    <ul>
+                    <li> Reset the app</li>
+                    <li> Select <code>Reset random distributions</code></li>
+                    <li> Press the <code>Compute field</code> button three times and then press <code>Delete field</code> until the drop down list is empty</li>
+                    </ul>
+                </div>
+                <div class="sidebar-item">
+                    <!-- <h3>Step 2</h3> -->
+                    <ul>
+                    <li> Reset the app</li>
+                    <li> Set <code>Star #</code> to 3 </li>
+                    <li> Press <code>Compute field</code></li>
+                    <li> Change the camera band from K to J</li> 
+                    <li> Press <code>Compute field</code></li>
+                    <li> Using the drop-down list, select the K band frame</li>
+                    <li> Change the camera band from K to V</li> 
+                    <li> Press <code>Compute field</code></li>
+                    <li> Using the drop-down list, cycle through K, J and V frames</li>
+                    </ul>
+                </div>
+                <div class="sidebar-item">
+                    <!-- <h3>Step 2</h3> -->
+                    <ul>
+                    <li> Reset the app</li>
+                    <li> Set <code>Star #</code> to 3 </li>
+                    <li> Set the star magnitudes <code>Std</code> (standard deviation) to 0 </li>
+                    <li> Press <code>Compute field</code></li>
+                    <li> Set the star magnitudes <code>Std</code> (standard deviation) to 1 </li>
+                    <li> Press <code>Compute field</code></li>
+                    <li> Set the star magnitudes <code>Std</code> (standard deviation) to 2 </li>
+                    <li> Press <code>Compute field</code></li>
+                    </ul>
+                </div>
+                <div class="sidebar-item">
+                    <!-- <h3>Step 2</h3> -->
+                    <ul>
+                    <li> Reset the app</li>
+                    <li> Set the star spatial distribution to <code>Globular</code></li>
+                    <li> Set <code>Star #</code> to 10 </li>
+                    <li> Set the star globular cluster <code>Radius</code> to 0.1 arcsec</li>
+                    <li> Set the star magnitudes <code>Std</code> to 0</li>
+                    <li> Press <code>Compute field</code></li>
+                    <li> Select the <code>JWST</code> telescope</li>
+                    <li> Press <code>Compute field</code></li>
+                    <li> Select the <code>GMT</code> telescope</li>
+                    <li> Press <code>Compute field</code></li>
+                    </ul>
+                </div>
             </main>
-            <aside class="column right-column">
-                <h2>Star Field Generator</h2>
-                <p>Computes star fields as seen by either the HST, JWST or GMT telescope.</p>
-                <div class="sidebar-item">
-                    <h3>Camera</h3>
-                    <p>Sets the imaging camera photometric filter, pixel scale, field-of-view and exposure time.</p>
-                </div>
-                <div class="sidebar-item">
-                    <h3>Stars</h3>
-                    <p>
-                    Sets the star spatial and brightness random distributions.
-                    </p>
-                    <p>
-                    The spatial distribution of the stars is either uniform (x,y) or globular ((r,theta) where r and theta follow a Cauchy and Uniform distributions, respectively).
-                    </p>
-                    <p>The star magnitudes are drawn according to a Normal distribution.</p>
-                </div>
-                <a href="guide.html" target="_blank">eyepiece guide</a>
-            </aside>
         </div>
     </div>
 
-    <!--Register Service Worker. this will cache the wasm / js scripts for offline use (for PWA functionality). -->
-    <!-- Force refresh (Ctrl + F5) to load the latest files instead of cached files  -->
-    <script>
-        // We disable caching during development so that we always view the latest version.
-        if ('serviceWorker' in navigator && window.location.hash !== "#dev") {
-            window.addEventListener('load', function () {
-                navigator.serviceWorker.register('sw.js');
-            });
-        }
-    </script>
 </body>
 
 </html>
